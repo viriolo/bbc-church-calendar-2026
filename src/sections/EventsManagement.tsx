@@ -4,6 +4,7 @@ import { useInView } from 'framer-motion';
 import { 
   Filter,
   Calendar,
+  Users,
   AlertCircle,
   CheckCircle2,
   FileEdit,
