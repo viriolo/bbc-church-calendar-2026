@@ -1,21 +1,30 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  environment = { NODE_VERSION = "22", NODE_ENV = "production" }
 
-[build.environment]
-  NODE_VERSION = "22"
+# Completely skip Next.js plugin
+[build.processing]
+  skip_processing = false
 
-# IMPORTANT: Disable Next.js plugin since this is a Vite app
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-  [plugins.inputs]
-    enable = false
+[build.processing.css]
+  bundle = true
+  minify = true
 
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.images]
+  compress = true
+
+# SPA redirect rules
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
