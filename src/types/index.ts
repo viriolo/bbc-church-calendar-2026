@@ -1,5 +1,5 @@
 // Enums
-export type EventStatus = 'draft' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type EventStatus = 'draft' | 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'needs-sponsor';
 export type UserRole = 'admin' | 'ministry_leader' | 'planning_committee' | 'member';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
 export type Pathway = 'Witness' | 'Bible' | 'Care/Neighbour' | 'Freedom & Justice';
@@ -356,6 +356,7 @@ export function getEventStatusColor(status: EventStatus): string {
     confirmed: '#22c55e', // green-500
     completed: '#3b82f6', // blue-500
     cancelled: '#ef4444', // red-500
+    'needs-sponsor': '#f43f5e', // rose-500
   };
   return colors[status];
 }
@@ -367,6 +368,7 @@ export function getEventStatusLabel(status: EventStatus): string {
     confirmed: 'Confirmed',
     completed: 'Completed',
     cancelled: 'Cancelled',
+    'needs-sponsor': 'Needs Sponsor',
   };
   return labels[status];
 }
@@ -395,4 +397,57 @@ export function formatTime(timeString?: string): string {
 export function formatCurrency(amount?: number): string {
   if (amount === undefined || amount === null) return 'K0.00';
   return `K${amount.toFixed(2)}`;
+}
+
+// New types for redesigned components
+export interface Stats {
+  needsAttention: number;
+  upcoming: number;
+  ministries: number;
+  totalEvents: number;
+  confirmedEvents: number;
+  pendingEvents: number;
+}
+
+export interface CalendarView {
+  type: 'year' | 'month' | 'week' | 'list';
+  currentDate: Date;
+}
+
+export interface QuarterInfo {
+  id: number;
+  name: string;
+  theme: string;
+  study: string;
+  focus: string;
+  scripture: string;
+  startDate: Date;
+  endDate: Date;
+  progress: number;
+  totalEvents: number;
+  confirmedEvents: number;
+  pendingEvents: number;
+}
+
+export interface Budget {
+  total: number;
+  approved: number;
+  pending: number;
+  categories: {
+    name: string;
+    amount: number;
+    color: string;
+  }[];
+}
+
+// Display event type for redesigned components
+export interface DisplayEvent {
+  id: string;
+  title: string;
+  date: Date;
+  status: 'confirmed' | 'pending' | 'draft' | 'needs-sponsor';
+  ministry?: string;
+  description?: string;
+  budget?: number;
+  sponsor?: string;
 }

@@ -36,6 +36,7 @@
     "cmdk": "^0.2.1",
     "date-fns": "^3.3.1",
     "file-saver": "^2.0.5",
+    "framer-motion": "^12.29.2",
     "ics": "^3.7.2",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
