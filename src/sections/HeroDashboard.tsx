@@ -6,7 +6,8 @@ import {
   Users, 
   CheckCircle2, 
   Clock,
-  TrendingUp
+  TrendingUp,
+  BookOpen
 } from 'lucide-react';
 import type { Quarter, Stats } from '../types';
 
