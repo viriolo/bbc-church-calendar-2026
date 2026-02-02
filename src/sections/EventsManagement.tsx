@@ -2,17 +2,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef } from 'react';
 import { useInView } from 'framer-motion';
 import { 
-  Plus, 
-  Users, 
-  Download, 
-  Printer, 
   Filter,
   Calendar,
   AlertCircle,
   CheckCircle2,
   FileEdit,
   HeartHandshake,
-  MoreHorizontal,
   Search,
   Clock
 } from 'lucide-react';
@@ -94,41 +89,7 @@ export default function EventsManagement({ events }: EventsManagementProps) {
             <p className="mt-2 text-slate-600">Manage and track all church events and activities</p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add Event
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-4 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 shadow-lg hover:shadow-xl hover:border-slate-300 transition-all flex items-center gap-2"
-            >
-              <Users className="w-5 h-5" />
-              Add Ministry
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-4 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 shadow-lg hover:shadow-xl hover:border-slate-300 transition-all flex items-center gap-2"
-            >
-              <Download className="w-5 h-5" />
-              Export
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-4 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 shadow-lg hover:shadow-xl hover:border-slate-300 transition-all flex items-center gap-2"
-            >
-              <Printer className="w-5 h-5" />
-              Print
-            </motion.button>
-          </div>
+
         </motion.div>
 
         {/* Search and Filters */}

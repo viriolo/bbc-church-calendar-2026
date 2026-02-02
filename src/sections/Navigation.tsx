@@ -2,10 +2,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   CalendarDays, 
-  Calendar as CalendarIcon, 
-  List, 
-  Grid3X3,
-  LogIn,
+  List,
   Menu,
   X
 } from 'lucide-react';
@@ -18,16 +15,34 @@ interface NavigationProps {
   setCalendarView: (view: CalendarView) => void;
 }
 
+// Simplified nav items - only showing what's functional
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'year', label: 'Year Overview', icon: Grid3X3 },
-  { id: 'month', label: 'Monthly View', icon: CalendarDays },
-  { id: 'week', label: 'Weekly View', icon: CalendarIcon },
-  { id: 'list', label: 'List View', icon: List },
+  { id: 'month', label: 'Calendar', icon: CalendarDays },
+  { id: 'list', label: 'Events', icon: List },
 ];
 
 export default function Navigation({ isScrolled, calendarView, setCalendarView }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleNavClick = (itemId: string) => {
+    // Scroll to section based on nav item
+    if (itemId === 'dashboard') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (itemId === 'month') {
+      const calendarSection = document.getElementById('calendar-section');
+      calendarSection?.scrollIntoView({ behavior: 'smooth' });
+    } else if (itemId === 'list') {
+      const eventsSection = document.getElementById('events-section');
+      eventsSection?.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    setCalendarView({
+      type: itemId as CalendarView['type'],
+      currentDate: new Date(),
+    });
+    setMobileMenuOpen(false);
+  };
 
   return (
     <motion.header
@@ -50,8 +65,9 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
         >
           {/* Logo */}
           <motion.div 
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 cursor-pointer"
             whileHover={{ scale: 1.02 }}
+            onClick={() => handleNavClick('dashboard')}
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-800 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-800/30">
               <CalendarDays className="w-5 h-5 text-white" />
@@ -68,9 +84,7 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
           <div className="hidden lg:flex items-center gap-1">
             {navItems.map((item, index) => {
               const Icon = item.icon;
-              const isActive = 
-                (item.id === 'dashboard' && calendarView.type === 'month') ||
-                calendarView.type === item.id;
+              const isActive = calendarView.type === item.id;
               
               return (
                 <motion.button
@@ -78,14 +92,7 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + index * 0.05 }}
-                  onClick={() => {
-                    if (item.id !== 'dashboard') {
-                      setCalendarView({
-                        type: item.id as CalendarView['type'],
-                        currentDate: new Date(),
-                      });
-                    }
-                  }}
+                  onClick={() => handleNavClick(item.id)}
                   className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     isActive
                       ? 'text-blue-800'
@@ -108,29 +115,17 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
             })}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-white text-sm font-semibold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-shadow"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </motion.button>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl hover:bg-slate-100 transition-colors"
-            >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6 text-slate-700" />
-              ) : (
-                <Menu className="w-6 h-6 text-slate-700" />
-              )}
-            </button>
-          </div>
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6 text-slate-700" />
+            ) : (
+              <Menu className="w-6 h-6 text-slate-700" />
+            )}
+          </button>
         </motion.nav>
 
         {/* Mobile Menu */}
@@ -148,13 +143,7 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
               return (
                 <button
                   key={item.id}
-                  onClick={() => {
-                    setCalendarView({
-                      type: item.id as CalendarView['type'],
-                      currentDate: new Date(),
-                    });
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={() => handleNavClick(item.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-800 transition-colors"
                 >
                   <Icon className="w-5 h-5" />
@@ -162,10 +151,6 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
                 </button>
               );
             })}
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-white font-semibold mt-2">
-              <LogIn className="w-5 h-5" />
-              Sign In
-            </button>
           </div>
         </motion.div>
       </div>

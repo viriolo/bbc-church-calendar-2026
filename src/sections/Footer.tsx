@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
-import { Heart, MapPin, Phone, Mail, ExternalLink } from 'lucide-react';
+import { Heart, MapPin } from 'lucide-react';
 
 export default function Footer() {
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <footer className="relative bg-slate-900 text-white overflow-hidden">
       {/* Background Pattern */}
@@ -21,7 +26,7 @@ export default function Footer() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
-        <div className="py-16 grid md:grid-cols-3 gap-12">
+        <div className="py-16 grid md:grid-cols-2 gap-12">
           {/* Brand */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -42,18 +47,12 @@ export default function Footer() {
               &ldquo;To Present Everyone Mature In Christ&rdquo;
               <span className="block mt-1 text-sm not-italic">— Colossians 1:28-29</span>
             </p>
-            <div className="flex gap-4">
-              {['Facebook', 'Twitter', 'Instagram', 'YouTube'].map((social) => (
-                <motion.a
-                  key={social}
-                  href="#"
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-blue-600 transition-colors"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                </motion.a>
-              ))}
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-blue-500 mt-0.5" />
+              <span className="text-slate-400">
+                Boroko, Port Moresby<br />
+                Papua New Guinea
+              </span>
             </div>
           </motion.div>
 
@@ -67,51 +66,23 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-3">
               {[
-                'Dashboard',
-                'Year Overview',
-                'Monthly View',
-                'Weekly View',
-                'List View',
-                'Event Management',
+                { label: 'Dashboard', id: 'hero-section' },
+                { label: 'Quarter Focus', id: 'quarter-section' },
+                { label: 'Events Summary', id: 'summary-section' },
+                { label: 'Upcoming Events', id: 'events-section' },
+                { label: 'Calendar', id: 'calendar-section' },
               ].map((link) => (
-                <li key={link}>
-                  <motion.a
-                    href="#"
+                <li key={link.id}>
+                  <motion.button
+                    onClick={() => scrollToSection(link.id)}
                     whileHover={{ x: 4 }}
                     className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    {link}
-                  </motion.a>
+                    {link.label}
+                  </motion.button>
                 </li>
               ))}
-            </ul>
-          </motion.div>
-
-          {/* Contact Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-blue-500 mt-0.5" />
-                <span className="text-slate-400">
-                  Boroko, Port Moresby<br />
-                  Papua New Guinea
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-blue-500" />
-                <span className="text-slate-400">+675 123 4567</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-blue-500" />
-                <span className="text-slate-400">info@borokobaptist.org.pg</span>
-              </li>
             </ul>
           </motion.div>
         </div>

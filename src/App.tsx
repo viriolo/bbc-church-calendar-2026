@@ -4,7 +4,7 @@ import HeroDashboard from './sections/HeroDashboard';
 import QuarterFocus from './sections/QuarterFocus';
 import EventsManagement from './sections/EventsManagement';
 import CalendarGrid from './sections/CalendarGrid';
-import BudgetOverview from './sections/BudgetOverview';
+import EventsSummary from './sections/EventsSummary';
 import Footer from './sections/Footer';
 import type { Quarter, Event, Stats, CalendarView } from './types';
 import { endOfQuarter, startOfQuarter } from 'date-fns';
@@ -101,15 +101,30 @@ function App() {
       <Navigation isScrolled={isScrolled} calendarView={calendarView} setCalendarView={setCalendarView} />
       
       <main className="pt-20">
-        <HeroDashboard quarter={currentQuarter} stats={stats} />
+        <section id="hero-section">
+          <HeroDashboard quarter={currentQuarter} stats={stats} />
+        </section>
         
-        <QuarterFocus quarter={currentQuarter} />
+        <section id="quarter-section">
+          <QuarterFocus quarter={currentQuarter} />
+        </section>
         
-        <EventsManagement events={events} />
+        <section id="summary-section">
+          <EventsSummary 
+            totalEvents={stats.totalEvents}
+            confirmedEvents={stats.confirmedEvents}
+            pendingEvents={stats.pendingEvents}
+            needsAttention={stats.needsAttention}
+          />
+        </section>
         
-        <CalendarGrid events={events} />
+        <section id="events-section">
+          <EventsManagement events={events} />
+        </section>
         
-        <BudgetOverview />
+        <section id="calendar-section">
+          <CalendarGrid events={events} />
+        </section>
       </main>
       
       <Footer />

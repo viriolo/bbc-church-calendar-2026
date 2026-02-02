@@ -6,8 +6,7 @@ import {
   Users, 
   CheckCircle2, 
   Clock,
-  TrendingUp,
-  BookOpen
+  TrendingUp
 } from 'lucide-react';
 import type { Quarter, Stats } from '../types';
 
@@ -235,7 +234,7 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
               </cite>
             </motion.blockquote>
 
-            {/* Quick Actions */}
+            {/* Quick Action - Scroll to Calendar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -245,18 +244,11 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => document.getElementById('calendar-section')?.scrollIntoView({ behavior: 'smooth' })}
                 className="btn-primary flex items-center gap-2"
               >
                 <Calendar className="w-5 h-5" />
                 View Calendar
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 shadow-lg hover:shadow-xl hover:border-slate-300 transition-all flex items-center gap-2"
-              >
-                <BookOpen className="w-5 h-5" />
-                Study Guide
               </motion.button>
             </motion.div>
           </motion.div>
