@@ -134,6 +134,25 @@ const generateSampleEvents = (): Event[] => {
     end_time: '12:00',
   }));
 
+  // Passion Week - dates TBC pending confirmation
+  events.push(createEvent('Passion Week - Day 1', '2026-04-13', 'Worship', 'draft', {
+    description: 'Passion Week - Date to be confirmed',
+    start_time: '09:00',
+    end_time: '12:00',
+  }));
+  
+  events.push(createEvent('Passion Week - Day 2', '2026-04-14', 'Worship', 'draft', {
+    description: 'Passion Week - Date to be confirmed',
+    start_time: '09:00',
+    end_time: '12:00',
+  }));
+  
+  events.push(createEvent('Passion Week - Day 3', '2026-04-15', 'Worship', 'draft', {
+    description: 'Passion Week - Date to be confirmed',
+    start_time: '09:00',
+    end_time: '12:00',
+  }));
+
   events.push(createEvent('Q2 Full Breakfast', '2026-06-28', 'Fellowship', 'pending', {
     description: 'Essence of God\'s Word - Fully furnished breakfast',
     start_time: '08:00',
