@@ -18,14 +18,16 @@ interface BudgetCategory {
   trend: 'up' | 'down' | 'neutral';
 }
 
+// This would ideally come from props or a data store
 const budgetData = {
-  total: 4000,
-  approved: 0,
-  pending: 4000,
+  total: 15200,
+  approved: 8750,
+  pending: 6450,
   categories: [
-    { name: 'Needs Attention', amount: 21, color: '#f43f5e', icon: AlertCircle, trend: 'up' as const },
-    { name: 'Drafts', amount: 4, color: '#94a3b8', icon: PieChart, trend: 'neutral' as const },
-    { name: 'Sponsorship', amount: 5, color: '#f59e0b', icon: Wallet, trend: 'down' as const },
+    { name: 'Full Breakfasts', amount: 2000, color: '#3b82f6', icon: Wallet, trend: 'up' as const },
+    { name: 'Family Camp', amount: 5000, color: '#f59e0b', icon: PieChart, trend: 'neutral' as const },
+    { name: 'Special Events', amount: 4500, color: '#10b981', icon: CheckCircle2, trend: 'down' as const },
+    { name: 'Sponsorship Needed', amount: 3700, color: '#f43f5e', icon: AlertCircle, trend: 'up' as const },
   ] as BudgetCategory[],
 };
 
@@ -174,7 +176,7 @@ export default function BudgetOverview() {
                 </span>
                 <span className="text-sm text-emerald-600 font-medium mt-1">
                   <TrendingUp className="w-4 h-4 inline mr-1" />
-                  0% Approved
+                  {approvedPercentage.toFixed(0)}% Approved
                 </span>
               </div>
             </div>

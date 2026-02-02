@@ -10,6 +10,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import type { QuarterInfo, Stats } from '@/types';
+import { HeroIllustration } from '@/components/HeroIllustration';
 
 interface HeroDashboardProps {
   quarter: QuarterInfo;
@@ -195,7 +196,7 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="text-center lg:text-left"
           >
-            {/* QuarterInfo Badge */}
+            {/* Quarter Badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -261,36 +262,44 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
             </motion.div>
           </motion.div>
 
-          {/* Right: Stats Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <StatCard
-              icon={AlertCircle}
-              label="Needs Attention"
-              value={stats.needsAttention}
-              color="rose"
-              delay={0.4}
-            />
-            <StatCard
-              icon={Calendar}
-              label="Upcoming Events"
-              value={stats.upcoming}
-              color="amber"
-              delay={0.5}
-            />
-            <StatCard
-              icon={Users}
-              label="Active Ministries"
-              value={stats.ministries}
-              color="blue"
-              delay={0.6}
-            />
-            <StatCard
-              icon={CheckCircle2}
-              label="Confirmed Events"
-              value={stats.confirmedEvents}
-              color="emerald"
-              delay={0.7}
-            />
+          {/* Right: Illustration (Desktop) / Stats (Mobile) */}
+          <div className="relative">
+            {/* Show illustration on larger screens */}
+            <div className="hidden lg:block">
+              <HeroIllustration />
+            </div>
+            
+            {/* Show stats grid on mobile */}
+            <div className="grid grid-cols-2 gap-4 lg:hidden">
+              <StatCard
+                icon={AlertCircle}
+                label="Needs Attention"
+                value={stats.needsAttention}
+                color="rose"
+                delay={0.4}
+              />
+              <StatCard
+                icon={Calendar}
+                label="Upcoming Events"
+                value={stats.upcoming}
+                color="amber"
+                delay={0.5}
+              />
+              <StatCard
+                icon={Users}
+                label="Active Ministries"
+                value={stats.ministries}
+                color="blue"
+                delay={0.6}
+              />
+              <StatCard
+                icon={CheckCircle2}
+                label="Confirmed Events"
+                value={stats.confirmedEvents}
+                color="emerald"
+                delay={0.7}
+              />
+            </div>
           </div>
         </div>
 
@@ -335,7 +344,9 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
                   <Calendar className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-medium text-slate-500">This Month</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-800">18</p>
+                <p className="text-2xl font-bold text-slate-800">
+                  <AnimatedNumber value={18} />
+                </p>
               </div>
             </div>
           </div>

@@ -53,7 +53,7 @@ export default function QuarterFocus({ quarter }: QuarterFocusProps) {
         >
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold mb-4">
             <Target className="w-4 h-4" />
-            QuarterInfo Focus
+            Quarterly Focus
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
             {quarter.name}: {quarter.theme}
@@ -118,7 +118,7 @@ export default function QuarterFocus({ quarter }: QuarterFocusProps) {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">QuarterInfo Progress</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Quarter Progress</h3>
               <p className="text-slate-600">
                 <span className="font-semibold text-blue-800">{quarter.confirmedEvents}</span> of{' '}
                 <span className="font-semibold">{quarter.totalEvents}</span> events confirmed
@@ -151,8 +151,8 @@ export default function QuarterFocus({ quarter }: QuarterFocusProps) {
               </motion.div>
             </div>
             <div className="flex justify-between mt-2 text-sm text-slate-500">
-              <span>QuarterInfo Start</span>
-              <span>QuarterInfo End</span>
+              <span>Quarter Start</span>
+              <span>Quarter End</span>
             </div>
           </div>
         </motion.div>
