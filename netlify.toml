@@ -5,14 +5,13 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+  # Disable Netlify's Next.js plugin to avoid conflicts with static export
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[context.production]
-  environment = { NODE_ENV = "production" }
 
 [[headers]]
   for = "/*"
