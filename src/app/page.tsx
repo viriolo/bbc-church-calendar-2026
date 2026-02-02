@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, List, Grid3X3, BarChart3, Plus, Menu, X, LogIn, User } from "lucide-react";
+import { Calendar, List, Grid3X3, BarChart3, Plus, Menu, X, LogIn, User, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,6 +16,7 @@ import { MonthView } from "@/components/calendar/month-view";
 import { WeekView } from "@/components/calendar/week-view";
 import { ListView } from "@/components/calendar/list-view";
 import { EventDialog } from "@/components/calendar/event-dialog";
+import { EventDetailDialog } from "@/components/calendar/event-detail-dialog";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { Event, UserRole, QUARTERLY_PATHWAYS, getQuarterInfo } from "@/types";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
@@ -24,6 +25,7 @@ export default function Home() {
   const [view, setView] = useState<"dashboard" | "year" | "month" | "week" | "list">("dashboard");
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 2)); // Feb 2, 2026
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -50,6 +52,11 @@ export default function Home() {
     setSelectedEvent(undefined);
     setSelectedDate(date);
     setIsEventDialogOpen(true);
+  };
+
+  const handleViewEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setIsEventDetailOpen(true);
   };
 
   const handleEditEvent = (event: Event) => {
@@ -263,7 +270,8 @@ export default function Home() {
                 events={events} 
                 ministries={ministries}
                 currentDate={currentDate}
-                onEditEvent={handleEditEvent}
+                onEditEvent={handleViewEvent}
+                onAddEvent={() => handleAddEvent()}
               />
             )}
             {view === 'year' && (
@@ -274,7 +282,7 @@ export default function Home() {
                   setCurrentDate(date);
                   setView('month');
                 }}
-                onEventClick={handleEditEvent}
+                onEventClick={handleViewEvent}
               />
             )}
             {view === 'month' && (
@@ -283,7 +291,7 @@ export default function Home() {
                 currentDate={currentDate}
                 onDateChange={setCurrentDate}
                 onDateSelect={handleAddEvent}
-                onEventClick={handleEditEvent}
+                onEventClick={handleViewEvent}
               />
             )}
             {view === 'week' && (
@@ -291,7 +299,7 @@ export default function Home() {
                 events={events}
                 currentDate={currentDate}
                 onDateChange={setCurrentDate}
-                onEventClick={handleEditEvent}
+                onEventClick={handleViewEvent}
               />
             )}
             {view === 'list' && (
@@ -299,14 +307,23 @@ export default function Home() {
                 events={events}
                 currentDate={currentDate}
                 onDateChange={setCurrentDate}
-                onEventClick={handleEditEvent}
+                onEventClick={handleViewEvent}
               />
             )}
           </div>
         </main>
       </div>
 
-      {/* Event Dialog */}
+      {/* Event Detail Dialog */}
+      <EventDetailDialog
+        open={isEventDetailOpen}
+        onOpenChange={setIsEventDetailOpen}
+        event={selectedEvent || null}
+        onEdit={handleEditEvent}
+        onClose={() => setIsEventDetailOpen(false)}
+      />
+
+      {/* Event Edit Dialog */}
       <EventDialog
         open={isEventDialogOpen}
         onOpenChange={setIsEventDialogOpen}

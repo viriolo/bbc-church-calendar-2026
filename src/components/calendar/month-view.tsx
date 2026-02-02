@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Event } from "@/types";
+import { Event, QUARTERLY_PATHWAYS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -172,10 +172,10 @@ export function MonthView({
                   {dayEvents.slice(0, 3).map((event) => (
                     <div
                       key={event.id}
-                      className="text-xs px-2 py-1 rounded truncate cursor-pointer hover:opacity-80"
+                      className="text-xs px-2 py-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center gap-1"
                       style={{ 
-                        backgroundColor: `${getCategoryColor(event.category)}20`,
-                        borderLeft: `3px solid ${getCategoryColor(event.category)}`,
+                        backgroundColor: `${getCategoryColor(event.category)}15`,
+                        borderLeft: `3px solid ${QUARTERLY_PATHWAYS[event.quarter].color}`,
                         color: getCategoryColor(event.category)
                       }}
                       onClick={(e) => {
@@ -184,12 +184,16 @@ export function MonthView({
                       }}
                       title={event.title}
                     >
+                      <span 
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: QUARTERLY_PATHWAYS[event.quarter].color }}
+                      />
                       {event.start_time && (
-                        <span className="font-medium mr-1">
+                        <span className="font-medium">
                           {event.start_time.slice(0, 5)}
                         </span>
                       )}
-                      {event.title}
+                      <span className="truncate">{event.title}</span>
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
@@ -211,16 +215,33 @@ export function MonthView({
       </Card>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs">
-        {['Worship', 'Prayer', 'Youth', 'Fellowship', 'Training', 'Outreach', 'Special'].map((cat) => (
-          <div key={cat} className="flex items-center gap-1.5">
-            <div 
-              className="w-3 h-3 rounded"
-              style={{ backgroundColor: getCategoryColor(cat) }}
-            />
-            <span className="text-muted-foreground">{cat}</span>
-          </div>
-        ))}
+      <div className="space-y-3">
+        {/* Quarter Legend */}
+        <div className="flex flex-wrap gap-4 text-xs">
+          <span className="text-muted-foreground font-medium">Quarters:</span>
+          {Object.entries(QUARTERLY_PATHWAYS).map(([q, info]) => (
+            <div key={q} className="flex items-center gap-1.5">
+              <div 
+                className="w-3 h-3 rounded"
+                style={{ backgroundColor: info.color }}
+              />
+              <span className="text-muted-foreground">{q}</span>
+            </div>
+          ))}
+        </div>
+        {/* Category Legend */}
+        <div className="flex flex-wrap gap-4 text-xs">
+          <span className="text-muted-foreground font-medium">Categories:</span>
+          {['Worship', 'Prayer', 'Youth', 'Fellowship', 'Training', 'Outreach', 'Special'].map((cat) => (
+            <div key={cat} className="flex items-center gap-1.5">
+              <div 
+                className="w-3 h-3 rounded"
+                style={{ backgroundColor: getCategoryColor(cat) }}
+              />
+              <span className="text-muted-foreground">{cat}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
