@@ -54,14 +54,28 @@ const fallbackQuarters: Quarter[] = [
 
 // ── Converters: DB row → frontend type ──
 
-function safeDate(value: string): Date {
-  // Handle both "2026-01-05" and "2026-01-05T00:00:00.000Z" formats
-  const d = new Date(value);
-  if (isNaN(d.getTime())) {
-    // Last resort: try adding time component for bare date strings
-    return new Date(value + 'T00:00:00');
+function safeDate(value: unknown): Date {
+  if (!value) return new Date(2026, 0, 1); // fallback to Jan 1 2026
+
+  const str = String(value);
+
+  // If it's already an ISO timestamp, parse directly
+  let d = new Date(str);
+  if (!isNaN(d.getTime())) return d;
+
+  // Try bare date with time component
+  d = new Date(str + 'T00:00:00');
+  if (!isNaN(d.getTime())) return d;
+
+  // Try extracting just the date part (e.g. from "2026-01-05 and extra stuff")
+  const match = str.match(/(\d{4}-\d{2}-\d{2})/);
+  if (match) {
+    d = new Date(match[1] + 'T00:00:00');
+    if (!isNaN(d.getTime())) return d;
   }
-  return d;
+
+  // Absolute fallback — never return an invalid Date
+  return new Date(2026, 0, 1);
 }
 
 function eventRowToEvent(row: EventRow): Event {

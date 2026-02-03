@@ -16,6 +16,7 @@ import type { Event } from '../types';
 import { getQuarterColorForMonth } from '../App';
 import {
   format,
+  isValid,
   startOfMonth,
   endOfMonth,
   startOfWeek,
@@ -27,6 +28,14 @@ import {
   subMonths,
   isToday
 } from 'date-fns';
+
+function safeFormat(date: Date, fmt: string, fallback = '—'): string {
+  try {
+    return isValid(date) ? format(date, fmt) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 interface CalendarGridProps {
   events: Event[];
@@ -75,7 +84,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const getEventsForDay = (day: Date) => {
-    return events.filter(event => isSameDay(event.date, day));
+    return events.filter(event => isValid(event.date) && isSameDay(event.date, day));
   };
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -124,7 +133,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
 
             <div className={`px-6 py-3 rounded-xl bg-white shadow-lg border ${quarterBorderColors[currentMonthQuarter.color] || 'border-slate-200'}`}>
               <span className="text-lg font-semibold text-slate-800">
-                {format(currentMonth, 'MMMM yyyy')}
+                {safeFormat(currentMonth, 'MMMM yyyy')}
               </span>
             </div>
 
@@ -209,7 +218,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
                         }
                       `}
                     >
-                      {format(day, 'd')}
+                      {safeFormat(day, 'd')}
                     </span>
                     {dayEvents.length > 0 && (
                       <span className="text-xs text-slate-400 font-medium">
@@ -261,7 +270,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-slate-900">
-                    {format(selectedDay, 'EEEE, MMMM d, yyyy')}
+                    {safeFormat(selectedDay, 'EEEE, MMMM d, yyyy')}
                   </h3>
                   <button
                     onClick={() => setSelectedDay(null)}
@@ -343,7 +352,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
             {monthNames.map((month, index) => {
               const isCurrent = index === currentMonth.getMonth();
               const quarterColor = getQuarterColorForMonth(index);
-              const monthEventCount = events.filter(e => e.date.getMonth() === index && e.date.getFullYear() === 2026).length;
+              const monthEventCount = events.filter(e => isValid(e.date) && e.date.getMonth() === index && e.date.getFullYear() === 2026).length;
 
               const bgClasses: Record<string, string> = {
                 emerald: 'bg-emerald-50 border-emerald-200 hover:border-emerald-400',
