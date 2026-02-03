@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2, Calendar, Save } from 'lucide-react';
 import type { Event } from '../types';
 import { createEvent, updateEvent, deleteEvent } from '../lib/api';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -58,7 +58,7 @@ export default function EventFormModal({ isOpen, onClose, onSaved, event }: Even
   useEffect(() => {
     if (event) {
       setTitle(event.title);
-      setDate(format(event.date, 'yyyy-MM-dd'));
+      setDate(isValid(event.date) ? format(event.date, 'yyyy-MM-dd') : '');
       setStatus(event.status);
       setMinistry(event.ministry || '');
       setDescription(event.description || '');

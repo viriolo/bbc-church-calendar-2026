@@ -176,13 +176,32 @@ function App() {
         fetchQuarters(),
         fetchStats(),
       ]);
-      setEvents(eventsData.map(eventRowToEvent));
-      setQuarters(quartersData.map(quarterRowToQuarter));
-      setApiStats(statsRowToStats(statsData));
+      // Log first row to help debug date format issues
+      if (eventsData.length > 0) {
+        console.log('[BBC Calendar] Sample event row from API:', JSON.stringify(eventsData[0]));
+      }
+      const convertedEvents: Event[] = [];
+      for (const row of eventsData) {
+        try {
+          convertedEvents.push(eventRowToEvent(row));
+        } catch (e) {
+          console.warn('[BBC Calendar] Failed to convert event row:', row, e);
+        }
+      }
+      setEvents(convertedEvents);
+      try {
+        setQuarters(quartersData.map(quarterRowToQuarter));
+      } catch (e) {
+        console.warn('[BBC Calendar] Failed to convert quarters:', e);
+      }
+      try {
+        setApiStats(statsRowToStats(statsData));
+      } catch (e) {
+        console.warn('[BBC Calendar] Failed to convert stats:', e);
+      }
     } catch (err) {
       console.warn('API unavailable, using local data:', err);
       setError('Could not connect to the database. Showing cached data.');
-      // Keep whatever data we have (fallback quarters, empty events)
     } finally {
       setLoading(false);
     }
