@@ -12,13 +12,20 @@ import {
   Search,
   Clock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Plus,
+  Pencil
 } from 'lucide-react';
 import type { Event } from '../types';
 import { format } from 'date-fns';
+import { useAdmin } from '../lib/admin';
 
 interface EventsManagementProps {
   events: Event[];
+  loading?: boolean;
+  onEventsChanged?: () => void;
+  onAddEvent?: () => void;
+  onEditEvent?: (event: Event) => void;
 }
 
 type FilterType = 'all' | 'drafts' | 'sponsorship' | 'pending' | 'confirmed';
@@ -46,7 +53,8 @@ const statusConfig: Record<string, { label: string; className: string; icon: Rea
   },
 };
 
-export default function EventsManagement({ events }: EventsManagementProps) {
+export default function EventsManagement({ events, loading, onAddEvent, onEditEvent }: EventsManagementProps) {
+  const { isAdmin } = useAdmin();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -95,6 +103,18 @@ export default function EventsManagement({ events }: EventsManagementProps) {
             <h2 className="text-3xl font-bold text-slate-900">Upcoming Events</h2>
             <p className="mt-2 text-slate-600">View and track church events and activities</p>
           </div>
+
+          {isAdmin && onAddEvent && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onAddEvent}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-lg shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              Add Event
+            </motion.button>
+          )}
         </motion.div>
 
         {/* Search and Filters */}
@@ -155,6 +175,24 @@ export default function EventsManagement({ events }: EventsManagementProps) {
 
         {/* Events List */}
         <div className="space-y-3">
+          {/* Loading skeleton */}
+          {loading && events.length === 0 && (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-200" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-slate-200 rounded w-1/3" />
+                      <div className="h-3 bg-slate-100 rounded w-1/4" />
+                    </div>
+                    <div className="h-6 w-24 bg-slate-200 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <AnimatePresence mode="popLayout">
             {filteredEvents.map((event, index) => {
               const status = statusConfig[event.status];
@@ -231,7 +269,7 @@ export default function EventsManagement({ events }: EventsManagementProps) {
 
                   {/* Expandable Details */}
                   <AnimatePresence>
-                    {isExpanded && event.description && (
+                    {isExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -239,13 +277,24 @@ export default function EventsManagement({ events }: EventsManagementProps) {
                         className="bg-slate-50 border-t border-slate-100"
                       >
                         <div className="p-5">
-                          <p className="text-sm text-slate-600 mb-3">{event.description}</p>
+                          {event.description && (
+                            <p className="text-sm text-slate-600 mb-3">{event.description}</p>
+                          )}
                           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
                             <span>Date: {format(event.date, 'EEEE, MMMM d, yyyy')}</span>
                             {event.ministry && <span>Ministry: {event.ministry}</span>}
                             {event.category && <span className="capitalize">Category: {event.category}</span>}
                             {event.budget && <span>Budget: K{event.budget.toLocaleString()}</span>}
                           </div>
+                          {isAdmin && onEditEvent && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
+                              className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                            >
+                              <Pencil className="w-4 h-4" />
+                              Edit Event
+                            </button>
+                          )}
                         </div>
                       </motion.div>
                     )}

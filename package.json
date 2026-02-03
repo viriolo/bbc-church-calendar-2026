@@ -7,11 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate-and-seed": "node scripts/migrate-and-seed.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
+    "@neondatabase/serverless": "^1.0.2",
+    "@netlify/functions": "^5.1.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
