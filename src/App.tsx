@@ -5,6 +5,9 @@ import QuarterFocus from './sections/QuarterFocus';
 import EventsManagement from './sections/EventsManagement';
 import CalendarGrid from './sections/CalendarGrid';
 import Footer from './sections/Footer';
+import LoginModal from './sections/LoginModal';
+import EventFormModal from './sections/EventFormModal';
+import { AdminProvider } from './lib/admin';
 import type { Quarter, Event, Stats, CalendarView } from './types';
 import { isAfter, isBefore, addDays, isSameMonth } from 'date-fns';
 import {
@@ -120,6 +123,25 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Event form modal state
+  const [eventFormOpen, setEventFormOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
+  const handleAddEvent = () => {
+    setEditingEvent(null);
+    setEventFormOpen(true);
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event);
+    setEventFormOpen(true);
+  };
+
+  const handleEventFormClose = () => {
+    setEventFormOpen(false);
+    setEditingEvent(null);
+  };
+
   // Load data from API
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -179,44 +201,61 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen sacred-bg">
-      <Navigation isScrolled={isScrolled} calendarView={calendarView} setCalendarView={setCalendarView} />
+    <AdminProvider>
+      <div className="min-h-screen sacred-bg">
+        <Navigation isScrolled={isScrolled} calendarView={calendarView} setCalendarView={setCalendarView} />
 
-      <main className="pt-20">
-        {/* Error banner */}
-        {error && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm flex items-center justify-between">
-              <span>{error}</span>
-              <button
-                onClick={loadData}
-                className="ml-4 px-3 py-1 bg-amber-200 hover:bg-amber-300 rounded-lg text-xs font-medium transition-colors"
-              >
-                Retry
-              </button>
+        <main className="pt-20">
+          {/* Error banner */}
+          {error && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  onClick={loadData}
+                  className="ml-4 px-3 py-1 bg-amber-200 hover:bg-amber-300 rounded-lg text-xs font-medium transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <section id="hero-section">
-          <HeroDashboard quarter={currentQuarter} stats={stats} />
-        </section>
+          <section id="hero-section">
+            <HeroDashboard quarter={currentQuarter} stats={stats} />
+          </section>
 
-        <section id="events-section">
-          <EventsManagement events={events} loading={loading} onEventsChanged={loadData} />
-        </section>
+          <section id="events-section">
+            <EventsManagement
+              events={events}
+              loading={loading}
+              onEventsChanged={loadData}
+              onAddEvent={handleAddEvent}
+              onEditEvent={handleEditEvent}
+            />
+          </section>
 
-        <section id="calendar-section">
-          <CalendarGrid events={events} />
-        </section>
+          <section id="calendar-section">
+            <CalendarGrid events={events} />
+          </section>
 
-        <section id="quarter-section">
-          <QuarterFocus quarter={currentQuarter} />
-        </section>
-      </main>
+          <section id="quarter-section">
+            <QuarterFocus quarter={currentQuarter} />
+          </section>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+
+        {/* Modals */}
+        <LoginModal />
+        <EventFormModal
+          isOpen={eventFormOpen}
+          onClose={handleEventFormClose}
+          onSaved={loadData}
+          event={editingEvent}
+        />
+      </div>
+    </AdminProvider>
   );
 }
 

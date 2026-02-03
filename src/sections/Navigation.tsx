@@ -1,13 +1,16 @@
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
+import {
+  LayoutDashboard,
+  CalendarDays,
   List,
   Menu,
-  X
+  X,
+  Lock,
+  LogOut
 } from 'lucide-react';
 import { useState } from 'react';
 import type { CalendarView } from '../types';
+import { useAdmin } from '../lib/admin';
 
 interface NavigationProps {
   isScrolled: boolean;
@@ -23,6 +26,7 @@ const navItems = [
 
 export default function Navigation({ isScrolled, calendarView, setCalendarView }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAdmin, openLogin, logout } = useAdmin();
 
   const handleNavClick = (itemId: string) => {
     // Scroll to section based on nav item
@@ -114,6 +118,31 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
             })}
           </div>
 
+          {/* Admin Button (Desktop) */}
+          <div className="hidden lg:flex items-center gap-2">
+            {isAdmin ? (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={logout}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </motion.button>
+            ) : (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={openLogin}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-blue-800 hover:bg-blue-50 transition-colors"
+              >
+                <Lock className="w-4 h-4" />
+                Admin
+              </motion.button>
+            )}
+          </div>
+
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -150,6 +179,25 @@ export default function Navigation({ isScrolled, calendarView, setCalendarView }
                 </button>
               );
             })}
+            <div className="border-t border-slate-200 pt-2 mt-2">
+              {isAdmin ? (
+                <button
+                  onClick={() => { logout(); setMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Sign Out
+                </button>
+              ) : (
+                <button
+                  onClick={() => { openLogin(); setMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-800 transition-colors"
+                >
+                  <Lock className="w-5 h-5" />
+                  Admin Login
+                </button>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
