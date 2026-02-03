@@ -44,6 +44,11 @@
   to = "/.netlify/functions/stats"
   status = 200
 
+[[redirects]]
+  from = "/api/seed"
+  to = "/.netlify/functions/seed"
+  status = 200
+
 # SPA redirect (catch-all — must be last)
 [[redirects]]
   from = "/*"

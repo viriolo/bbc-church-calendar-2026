@@ -1,9 +1,11 @@
 import { neon } from '@neondatabase/serverless';
 
 export function getDb() {
-  const url = process.env.DATABASE_URL;
+  // Netlify's Neon extension sets NETLIFY_DATABASE_URL automatically.
+  // Fall back to DATABASE_URL for local development.
+  const url = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
   if (!url) {
-    throw new Error('DATABASE_URL environment variable is not set');
+    throw new Error('NETLIFY_DATABASE_URL (or DATABASE_URL) environment variable is not set');
   }
   return neon(url);
 }
