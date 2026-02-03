@@ -126,7 +126,7 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: 
             </p>
           </div>
 
-          {/* Month Navigation */}
+          {/* Month Navigation + Export */}
           <div className="flex items-center gap-4">
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -151,6 +151,20 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: 
             >
               <ChevronRight className="w-5 h-5 text-slate-600" />
             </motion.button>
+
+            {isAdmin && (
+              <motion.button
+                type="button"
+                aria-label="Export calendar as PDF"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => window.print()}
+                className="export-pdf-btn hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-lg hover:bg-slate-800 transition-colors"
+              >
+                <CalendarIcon className="w-4 h-4" />
+                <span>Export PDF</span>
+              </motion.button>
+            )}
           </div>
         </motion.div>
 
@@ -197,6 +211,15 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: 
                   onMouseEnter={() => setHoveredDay(day)}
                   onMouseLeave={() => setHoveredDay(null)}
                   onClick={() => {
+                    // If this is an empty day and the user is an admin,
+                    // go straight to the "Add Event" flow for that date.
+                    if (isAdmin && onAddEventOnDate && dayEvents.length === 0) {
+                      onAddEventOnDate(day);
+                      setSelectedDay(day);
+                      return;
+                    }
+
+                    // Otherwise toggle the selected day panel to view events.
                     setSelectedDay(isSelected ? null : day);
                   }}
                   className={`

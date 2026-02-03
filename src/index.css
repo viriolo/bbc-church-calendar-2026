@@ -304,3 +304,28 @@
 .day-cell:hover::before {
   opacity: 1;
 }
+
+/* Print: only the calendar section (Export PDF) */
+@media print {
+  header,
+  #hero-section,
+  #events-section,
+  #quarter-section,
+  footer,
+  [role="dialog"],
+  .fixed {
+    display: none !important;
+  }
+  main {
+    padding-top: 0 !important;
+  }
+  #calendar-section {
+    padding: 0.5rem 1rem;
+    background: white;
+  }
+  #calendar-section .absolute.inset-0.sacred-bg,
+  #calendar-section .export-pdf-btn,
+  #calendar-section .day-cell::before {
+    display: none !important;
+  }
+}
