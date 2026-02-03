@@ -10,10 +10,13 @@ import {
   CheckCircle2,
   FileEdit,
   HeartHandshake,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Pencil
 } from 'lucide-react';
 import type { Event } from '../types';
 import { getQuarterColorForMonth } from '../App';
+import { useAdmin } from '../lib/admin';
 import {
   format,
   isValid,
@@ -39,6 +42,8 @@ function safeFormat(date: Date, fmt: string, fallback = '—'): string {
 
 interface CalendarGridProps {
   events: Event[];
+  onAddEventOnDate?: (date: Date) => void;
+  onEditEvent?: (event: Event) => void;
 }
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -70,12 +75,13 @@ const statusConfig: Record<string, { label: string; icon: React.ElementType; col
   'needs-sponsor': { label: 'Needs Sponsor', icon: HeartHandshake, color: 'text-rose-600' },
 };
 
-export default function CalendarGrid({ events }: CalendarGridProps) {
+export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: CalendarGridProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 1, 1));
   const [hoveredDay, setHoveredDay] = useState<Date | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const { isAdmin } = useAdmin();
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -191,18 +197,15 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
                   onMouseEnter={() => setHoveredDay(day)}
                   onMouseLeave={() => setHoveredDay(null)}
                   onClick={() => {
-                    if (dayEvents.length > 0) {
-                      setSelectedDay(isSelected ? null : day);
-                    }
+                    setSelectedDay(isSelected ? null : day);
                   }}
                   className={`
                     relative min-h-[100px] p-2 border-b border-r border-slate-100
-                    transition-all duration-300 day-cell
+                    transition-all duration-300 day-cell cursor-pointer
                     ${!isCurrentMonth ? 'bg-slate-50/50' : 'bg-white'}
                     ${isTodayDate ? 'bg-blue-50/50' : ''}
                     ${isHovered ? 'bg-blue-50' : ''}
                     ${isSelected ? 'bg-blue-100 ring-2 ring-blue-400 ring-inset' : ''}
-                    ${dayEvents.length > 0 ? 'cursor-pointer' : ''}
                   `}
                 >
                   {/* Day Number */}
@@ -260,7 +263,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
 
         {/* Selected Day Detail Panel */}
         <AnimatePresence>
-          {selectedDay && selectedDayEvents.length > 0 && (
+          {selectedDay && (
             <motion.div
               initial={{ opacity: 0, y: -10, height: 0 }}
               animate={{ opacity: 1, y: 0, height: 'auto' }}
@@ -272,49 +275,76 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
                   <h3 className="text-lg font-bold text-slate-900">
                     {safeFormat(selectedDay, 'EEEE, MMMM d, yyyy')}
                   </h3>
-                  <button
-                    onClick={() => setSelectedDay(null)}
-                    className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
-                  >
-                    <X className="w-4 h-4 text-slate-600" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isAdmin && onAddEventOnDate && (
+                      <button
+                        onClick={() => onAddEventOnDate(selectedDay)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Event
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setSelectedDay(null)}
+                      className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-slate-600" />
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {selectedDayEvents.map((event) => {
-                    const status = statusConfig[event.status];
-                    const StatusIcon = status.icon;
-                    return (
-                      <div key={event.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-slate-900">{event.title}</h4>
-                            <span className={`flex items-center gap-1 text-xs font-medium ${status.color}`}>
-                              <StatusIcon className="w-3 h-3" />
-                              {status.label}
-                            </span>
-                          </div>
-                          {event.description && (
-                            <p className="text-sm text-slate-600 mb-2">{event.description}</p>
-                          )}
-                          <div className="flex flex-wrap items-center gap-3">
-                            {event.ministry && (
-                              <span className="flex items-center gap-1 text-xs text-slate-500">
-                                <Users className="w-3 h-3" />
-                                {event.ministry}
+                {selectedDayEvents.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedDayEvents.map((event) => {
+                      const status = statusConfig[event.status];
+                      const StatusIcon = status.icon;
+                      return (
+                        <div key={event.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-slate-900">{event.title}</h4>
+                              <span className={`flex items-center gap-1 text-xs font-medium ${status.color}`}>
+                                <StatusIcon className="w-3 h-3" />
+                                {status.label}
                               </span>
+                            </div>
+                            {event.description && (
+                              <p className="text-sm text-slate-600 mb-2">{event.description}</p>
                             )}
-                            {event.budget && (
-                              <span className="flex items-center gap-1 text-xs text-slate-500">
-                                <AlertCircle className="w-3 h-3" />
-                                Budget: K{event.budget.toLocaleString()}
-                              </span>
+                            <div className="flex flex-wrap items-center gap-3">
+                              {event.ministry && (
+                                <span className="flex items-center gap-1 text-xs text-slate-500">
+                                  <Users className="w-3 h-3" />
+                                  {event.ministry}
+                                </span>
+                              )}
+                              {event.budget && (
+                                <span className="flex items-center gap-1 text-xs text-slate-500">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Budget: K{event.budget.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                            {isAdmin && onEditEvent && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
+                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                Edit
+                              </button>
                             )}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    No events on this day.
+                    {isAdmin && onAddEventOnDate && ' Click "Add Event" to create one.'}
+                  </p>
+                )}
               </div>
             </motion.div>
           )}
