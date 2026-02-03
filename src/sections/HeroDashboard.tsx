@@ -1,19 +1,23 @@
 import { motion, useMotionValue } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
-import { 
-  AlertCircle, 
-  Calendar, 
-  Users, 
-  CheckCircle2, 
+import {
+  AlertCircle,
+  Calendar,
+  Users,
+  CheckCircle2,
   Clock,
   TrendingUp,
-  BookOpen
+  BookOpen,
 } from 'lucide-react';
 import type { Quarter, Stats } from '../types';
 
 interface HeroDashboardProps {
   quarter: Quarter;
   stats: Stats;
+  quarters: Quarter[];
+  selectedQuarterIndex: number;
+  onSelectQuarter: (index: number) => void;
+  currentQuarterIndex: number;
 }
 
 function AnimatedNumber({ value, duration = 1.5 }: { value: number; duration?: number }) {
