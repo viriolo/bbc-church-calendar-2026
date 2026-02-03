@@ -19,35 +19,40 @@ interface HeroDashboardProps {
 function AnimatedNumber({ value, duration = 1.5 }: { value: number; duration?: number }) {
   const [displayValue, setDisplayValue] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const prevValueRef = useRef(0);
 
+  // Track visibility
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number;
-          const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
-            const easeOut = 1 - Math.pow(1 - progress, 3);
-            setDisplayValue(Math.floor(easeOut * value));
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            }
-          };
-          requestAnimationFrame(animate);
-        }
+        if (entry.isIntersecting) setIsVisible(true);
       },
       { threshold: 0.5 }
     );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
+    if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [value, duration, hasAnimated]);
+  }, []);
+
+  // Animate whenever value changes and element is visible
+  useEffect(() => {
+    if (!isVisible || value === prevValueRef.current) return;
+
+    const startValue = prevValueRef.current;
+    prevValueRef.current = value;
+    let startTime: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.floor(startValue + easeOut * (value - startValue)));
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [value, duration, isVisible]);
 
   return <span ref={ref}>{displayValue}</span>;
 }

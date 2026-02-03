@@ -176,28 +176,47 @@ function App() {
         fetchQuarters(),
         fetchStats(),
       ]);
-      // Log first row to help debug date format issues
-      if (eventsData.length > 0) {
-        console.log('[BBC Calendar] Sample event row from API:', JSON.stringify(eventsData[0]));
+
+      console.log('[BBC Calendar] API responses:', {
+        eventsCount: Array.isArray(eventsData) ? eventsData.length : 'not-array',
+        quartersCount: Array.isArray(quartersData) ? quartersData.length : 'not-array',
+        stats: statsData,
+      });
+      if (Array.isArray(eventsData) && eventsData.length > 0) {
+        console.log('[BBC Calendar] Sample event row:', JSON.stringify(eventsData[0]));
       }
+
+      // Convert events
       const convertedEvents: Event[] = [];
-      for (const row of eventsData) {
-        try {
-          convertedEvents.push(eventRowToEvent(row));
-        } catch (e) {
-          console.warn('[BBC Calendar] Failed to convert event row:', row, e);
+      if (Array.isArray(eventsData)) {
+        for (const row of eventsData) {
+          try {
+            convertedEvents.push(eventRowToEvent(row));
+          } catch (e) {
+            console.warn('[BBC Calendar] Failed to convert event row:', row, e);
+          }
         }
       }
       setEvents(convertedEvents);
-      try {
-        setQuarters(quartersData.map(quarterRowToQuarter));
-      } catch (e) {
-        console.warn('[BBC Calendar] Failed to convert quarters:', e);
+
+      // Convert quarters
+      if (Array.isArray(quartersData) && quartersData.length > 0) {
+        try {
+          setQuarters(quartersData.map(quarterRowToQuarter));
+        } catch (e) {
+          console.warn('[BBC Calendar] Failed to convert quarters:', e);
+        }
       }
-      try {
-        setApiStats(statsRowToStats(statsData));
-      } catch (e) {
-        console.warn('[BBC Calendar] Failed to convert stats:', e);
+
+      // Convert stats
+      if (statsData && typeof statsData === 'object') {
+        try {
+          const converted = statsRowToStats(statsData);
+          console.log('[BBC Calendar] Converted stats:', converted);
+          setApiStats(converted);
+        } catch (e) {
+          console.warn('[BBC Calendar] Failed to convert stats:', e);
+        }
       }
     } catch (err) {
       console.warn('API unavailable, using local data:', err);
