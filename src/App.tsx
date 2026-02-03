@@ -9,7 +9,7 @@ import LoginModal from './sections/LoginModal';
 import EventFormModal from './sections/EventFormModal';
 import { AdminProvider } from './lib/admin';
 import type { Quarter, Event, Stats, CalendarView } from './types';
-import { isAfter, isBefore, addDays, isSameMonth } from 'date-fns';
+import { isAfter, isBefore, addDays, isSameMonth, isValid } from 'date-fns';
 import {
   fetchEvents,
   fetchQuarters,
@@ -150,20 +150,34 @@ function App() {
   // Event form modal state
   const [eventFormOpen, setEventFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [prefillDate, setPrefillDate] = useState('');
 
   const handleAddEvent = () => {
     setEditingEvent(null);
+    setPrefillDate('');
+    setEventFormOpen(true);
+  };
+
+  const handleAddEventOnDate = (date: Date) => {
+    setEditingEvent(null);
+    setPrefillDate(
+      isValid(date)
+        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        : ''
+    );
     setEventFormOpen(true);
   };
 
   const handleEditEvent = (event: Event) => {
     setEditingEvent(event);
+    setPrefillDate('');
     setEventFormOpen(true);
   };
 
   const handleEventFormClose = () => {
     setEventFormOpen(false);
     setEditingEvent(null);
+    setPrefillDate('');
   };
 
   // Load data from API
@@ -298,7 +312,11 @@ function App() {
           </section>
 
           <section id="calendar-section">
-            <CalendarGrid events={events} />
+            <CalendarGrid
+              events={events}
+              onAddEventOnDate={handleAddEventOnDate}
+              onEditEvent={handleEditEvent}
+            />
           </section>
 
           <section id="quarter-section">
@@ -315,6 +333,7 @@ function App() {
           onClose={handleEventFormClose}
           onSaved={loadData}
           event={editingEvent}
+          prefillDate={prefillDate}
         />
       </div>
     </AdminProvider>

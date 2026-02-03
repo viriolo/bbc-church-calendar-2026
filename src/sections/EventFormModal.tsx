@@ -10,6 +10,7 @@ interface EventFormModalProps {
   onClose: () => void;
   onSaved: () => void;
   event?: Event | null; // null = create, Event = edit
+  prefillDate?: string; // yyyy-MM-dd format for new events from calendar click
 }
 
 const statusOptions = [
@@ -39,7 +40,7 @@ const ministryOptions = [
   'Hospitality',
 ];
 
-export default function EventFormModal({ isOpen, onClose, onSaved, event }: EventFormModalProps) {
+export default function EventFormModal({ isOpen, onClose, onSaved, event, prefillDate }: EventFormModalProps) {
   const isEdit = !!event;
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -66,7 +67,7 @@ export default function EventFormModal({ isOpen, onClose, onSaved, event }: Even
       setCategory(event.category || '');
     } else {
       setTitle('');
-      setDate('');
+      setDate(prefillDate || '');
       setStatus('draft');
       setMinistry('');
       setDescription('');
@@ -75,7 +76,7 @@ export default function EventFormModal({ isOpen, onClose, onSaved, event }: Even
     }
     setError('');
     setShowDeleteConfirm(false);
-  }, [event, isOpen]);
+  }, [event, isOpen, prefillDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
