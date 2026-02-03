@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 
 interface EventsManagementProps {
   events: Event[];
+  loading?: boolean;
+  onEventsChanged?: () => void;
 }
 
 type FilterType = 'all' | 'drafts' | 'sponsorship' | 'pending' | 'confirmed';
@@ -46,7 +48,7 @@ const statusConfig: Record<string, { label: string; className: string; icon: Rea
   },
 };
 
-export default function EventsManagement({ events }: EventsManagementProps) {
+export default function EventsManagement({ events, loading }: EventsManagementProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -155,6 +157,24 @@ export default function EventsManagement({ events }: EventsManagementProps) {
 
         {/* Events List */}
         <div className="space-y-3">
+          {/* Loading skeleton */}
+          {loading && events.length === 0 && (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-200" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-slate-200 rounded w-1/3" />
+                      <div className="h-3 bg-slate-100 rounded w-1/4" />
+                    </div>
+                    <div className="h-6 w-24 bg-slate-200 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <AnimatePresence mode="popLayout">
             {filteredEvents.map((event, index) => {
               const status = statusConfig[event.status];

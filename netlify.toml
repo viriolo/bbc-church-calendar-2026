@@ -1,11 +1,10 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  
+
 [build.environment]
   NODE_VERSION = "22"
 
-# Completely skip Next.js plugin
 [build.processing]
   skip_processing = false
 
@@ -20,7 +19,32 @@
 [build.processing.images]
   compress = true
 
-# SPA redirect rules
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# API routes — must come before the SPA catch-all
+[[redirects]]
+  from = "/api/events"
+  to = "/.netlify/functions/events"
+  status = 200
+
+[[redirects]]
+  from = "/api/events/*"
+  to = "/.netlify/functions/events"
+  status = 200
+
+[[redirects]]
+  from = "/api/quarters"
+  to = "/.netlify/functions/quarters"
+  status = 200
+
+[[redirects]]
+  from = "/api/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
+
+# SPA redirect (catch-all — must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
