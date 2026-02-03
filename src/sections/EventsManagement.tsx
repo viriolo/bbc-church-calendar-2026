@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef } from 'react';
 import { useInView } from 'framer-motion';
-import { 
+import {
   Filter,
   Calendar,
   Users,
@@ -10,7 +10,8 @@ import {
   FileEdit,
   HeartHandshake,
   Search,
-  Clock
+  Clock,
+  MoreHorizontal
 } from 'lucide-react';
 import type { Event } from '../types';
 import { format } from 'date-fns';
@@ -71,7 +72,7 @@ export default function EventsManagement({ events }: EventsManagementProps) {
   });
 
   return (
-    <section ref={ref} className="py-20 bg-white relative">
+    <section ref={ref} className="py-12 bg-white relative">
       {/* Background Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-30">
         <div className="absolute top-20 right-20 w-64 h-64 bg-blue-100 rounded-full blur-3xl" />
@@ -86,8 +87,8 @@ export default function EventsManagement({ events }: EventsManagementProps) {
           className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8"
         >
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">Events Management</h2>
-            <p className="mt-2 text-slate-600">Manage and track all church events and activities</p>
+            <h2 className="text-3xl font-bold text-slate-900">Upcoming Events</h2>
+            <p className="mt-2 text-slate-600">View and track church events and activities</p>
           </div>
 
 

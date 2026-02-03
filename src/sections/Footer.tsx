@@ -26,7 +26,7 @@ export default function Footer() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
-        <div className="py-16 grid md:grid-cols-2 gap-12">
+        <div className="py-10 grid md:grid-cols-2 gap-12">
           {/* Brand */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -67,10 +67,9 @@ export default function Footer() {
             <ul className="space-y-3">
               {[
                 { label: 'Dashboard', id: 'hero-section' },
-                { label: 'Quarter Focus', id: 'quarter-section' },
-                { label: 'Events Summary', id: 'summary-section' },
                 { label: 'Upcoming Events', id: 'events-section' },
                 { label: 'Calendar', id: 'calendar-section' },
+                { label: 'Quarter Focus', id: 'quarter-section' },
               ].map((link) => (
                 <li key={link.id}>
                   <motion.button

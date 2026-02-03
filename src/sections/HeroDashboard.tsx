@@ -128,7 +128,7 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
     <section 
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative min-h-[80vh] flex items-center justify-center overflow-hidden py-20"
+      className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-12"
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -292,7 +292,7 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="mt-16"
+          className="mt-10"
         >
           <div className="glass rounded-2xl p-6 shadow-lg">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

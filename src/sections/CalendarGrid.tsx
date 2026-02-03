@@ -51,7 +51,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
   return (
-    <section ref={ref} className="py-20 relative overflow-hidden">
+    <section ref={ref} className="py-12 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 sacred-bg" />
 
@@ -226,7 +226,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.5 }}
-          className="mt-12"
+          className="mt-8"
         >
           <h3 className="text-xl font-bold text-slate-900 mb-6 text-center">2026 Overview</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
