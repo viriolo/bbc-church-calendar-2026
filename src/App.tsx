@@ -266,6 +266,23 @@ function App() {
     setSelectedQuarterIndex((prev) => (quarters[prev] ? prev : currentQuarterIndex));
   }, [quarters, currentQuarterIndex]);
 
+  const selectedQuarter = useMemo(
+    () => quarters[selectedQuarterIndex] ?? quarters[currentQuarterIndex] ?? quarters[0],
+    [quarters, selectedQuarterIndex, currentQuarterIndex]
+  );
+
+  const eventsForSelectedQuarter = useMemo(() => {
+    if (!selectedQuarter) return events;
+    const { startDate, endDate } = selectedQuarter;
+    return events.filter((e) => {
+      if (!isValid(e.date)) return false;
+      return (
+        e.date.getTime() >= startDate.getTime() &&
+        e.date.getTime() <= endDate.getTime()
+      );
+    });
+  }, [events, selectedQuarter]);
+
   // Compute stats from events (fallback when API stats aren't available)
   const stats: Stats = useMemo(() => {
     if (apiStats) return apiStats;
@@ -276,7 +293,15 @@ function App() {
     const upcoming = events.filter(e => isAfter(e.date, today) && isBefore(e.date, addDays(today, 90))).length;
     const ministries = new Set(events.map(e => e.ministry).filter(Boolean)).size;
     const thisMonth = events.filter(e => isSameMonth(e.date, today)).length;
-    return { totalEvents: events.length, confirmedEvents: confirmed, pendingEvents: pending, needsAttention, upcoming, ministries, thisMonth };
+    return {
+      totalEvents: events.length,
+      confirmedEvents: confirmed,
+      pendingEvents: pending,
+      needsAttention,
+      upcoming,
+      ministries,
+      thisMonth,
+    };
   }, [events, apiStats]);
 
   // Scroll handler
@@ -308,12 +333,19 @@ function App() {
           )}
 
           <section id="hero-section">
-            <HeroDashboard quarter={currentQuarter} stats={stats} />
+            <HeroDashboard
+              quarter={selectedQuarter}
+              stats={stats}
+              quarters={quarters}
+              selectedQuarterIndex={selectedQuarterIndex}
+              onSelectQuarter={setSelectedQuarterIndex}
+              currentQuarterIndex={currentQuarterIndex}
+            />
           </section>
 
           <section id="events-section">
             <EventsManagement
-              events={events}
+              events={eventsForSelectedQuarter}
               loading={loading}
               onEventsChanged={loadData}
               onAddEvent={handleAddEvent}
@@ -323,7 +355,7 @@ function App() {
 
           <section id="calendar-section">
             <CalendarGrid
-              events={events}
+              events={eventsForSelectedQuarter}
               onAddEventOnDate={handleAddEventOnDate}
               onEditEvent={handleEditEvent}
             />
