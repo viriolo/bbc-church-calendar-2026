@@ -244,17 +244,27 @@ function App() {
     loadData();
   }, [loadData]);
 
-  // Current quarter
-  const currentQuarter = useMemo(() => {
+  // Current quarter (by calendar date) and selected quarter for viewing
+  const currentQuarterIndex = useMemo(() => {
     const now = new Date();
     const month = now.getMonth();
-    let qIndex = 0;
-    if (month <= 2) qIndex = 0;
-    else if (month <= 5) qIndex = 1;
-    else if (month <= 8) qIndex = 2;
-    else qIndex = 3;
-    return quarters[qIndex] || quarters[0];
-  }, [quarters]);
+    if (month <= 2) return 0;
+    if (month <= 5) return 1;
+    if (month <= 8) return 2;
+    return 3;
+  }, []);
+
+  const currentQuarter = useMemo(
+    () => quarters[currentQuarterIndex] || quarters[0],
+    [quarters, currentQuarterIndex]
+  );
+
+  const [selectedQuarterIndex, setSelectedQuarterIndex] = useState(currentQuarterIndex);
+
+  // Keep selected quarter in sync when quarters load (default to current quarter)
+  useEffect(() => {
+    setSelectedQuarterIndex((prev) => (quarters[prev] ? prev : currentQuarterIndex));
+  }, [quarters, currentQuarterIndex]);
 
   // Compute stats from events (fallback when API stats aren't available)
   const stats: Stats = useMemo(() => {
@@ -320,7 +330,12 @@ function App() {
           </section>
 
           <section id="quarter-section">
-            <QuarterFocus quarter={currentQuarter} />
+            <QuarterFocus
+              quarters={quarters}
+              selectedQuarterIndex={selectedQuarterIndex}
+              onSelectQuarter={setSelectedQuarterIndex}
+              currentQuarterIndex={currentQuarterIndex}
+            />
           </section>
         </main>
 

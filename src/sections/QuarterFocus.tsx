@@ -1,15 +1,31 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { BookOpen, Target, ScrollText, ChevronRight } from 'lucide-react';
+import { BookOpen, Target, ScrollText, ChevronRight, Calendar } from 'lucide-react';
 import type { Quarter } from '../types';
 
 interface QuarterFocusProps {
-  quarter: Quarter;
+  quarters: Quarter[];
+  selectedQuarterIndex: number;
+  onSelectQuarter: (index: number) => void;
+  currentQuarterIndex: number;
 }
 
-export default function QuarterFocus({ quarter }: QuarterFocusProps) {
+const quarterColors: Record<string, { bg: string; border: string; text: string; active: string }> = {
+  emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', active: 'bg-emerald-600' },
+  blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', active: 'bg-blue-600' },
+  amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', active: 'bg-amber-500' },
+  orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', active: 'bg-orange-500' },
+};
+
+export default function QuarterFocus({
+  quarters,
+  selectedQuarterIndex,
+  onSelectQuarter,
+  currentQuarterIndex,
+}: QuarterFocusProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const quarter = quarters[selectedQuarterIndex] ?? quarters[0];
 
   const focusItems = [
     {
@@ -44,6 +60,42 @@ export default function QuarterFocus({ quarter }: QuarterFocusProps) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Quarter tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.4 }}
+          className="flex flex-wrap justify-center gap-2 mb-8"
+        >
+          {quarters.map((q, index) => {
+            const isSelected = index === selectedQuarterIndex;
+            const isCurrent = index === currentQuarterIndex;
+            const colors = quarterColors[q.color] ?? quarterColors.blue;
+            return (
+              <button
+                key={q.id}
+                type="button"
+                onClick={() => onSelectQuarter(index)}
+                className={`
+                  inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all
+                  ${isSelected
+                    ? `${colors.active} text-white shadow-lg`
+                    : `${colors.bg} ${colors.border} border ${colors.text} hover:border-opacity-80`
+                  }
+                `}
+              >
+                <Calendar className="w-4 h-4" />
+                {q.name}
+                {isCurrent && (
+                  <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${isSelected ? 'bg-white/20' : 'bg-slate-200 text-slate-700'}`}>
+                    Current
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </motion.div>
+
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
