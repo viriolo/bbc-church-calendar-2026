@@ -54,12 +54,22 @@ const fallbackQuarters: Quarter[] = [
 
 // ── Converters: DB row → frontend type ──
 
+function safeDate(value: string): Date {
+  // Handle both "2026-01-05" and "2026-01-05T00:00:00.000Z" formats
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
+    // Last resort: try adding time component for bare date strings
+    return new Date(value + 'T00:00:00');
+  }
+  return d;
+}
+
 function eventRowToEvent(row: EventRow): Event {
   return {
     id: String(row.id),
     title: row.title,
-    date: new Date(row.date + 'T00:00:00'),
-    endDate: row.end_date ? new Date(row.end_date + 'T00:00:00') : undefined,
+    date: safeDate(row.date),
+    endDate: row.end_date ? safeDate(row.end_date) : undefined,
     status: row.status as Event['status'],
     ministry: row.ministry ?? undefined,
     description: row.description ?? undefined,
@@ -78,8 +88,8 @@ function quarterRowToQuarter(row: QuarterRow): Quarter {
     study: row.study,
     focus: row.focus,
     scripture: row.scripture,
-    startDate: new Date(row.start_date + 'T00:00:00'),
-    endDate: new Date(row.end_date + 'T00:00:00'),
+    startDate: safeDate(row.start_date),
+    endDate: safeDate(row.end_date),
     progress: Number(row.progress),
     totalEvents: Number(row.total_events),
     confirmedEvents: Number(row.confirmed_events),
