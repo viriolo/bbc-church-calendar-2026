@@ -62,3 +62,20 @@ export interface Stats {
   pendingEvents: number;
   thisMonth: number;
 }
+
+export interface Comment {
+  id: number;
+  event_id: number;
+  author: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ActivityItem {
+  id: number;
+  event_id: number | null;
+  actor: string;
+  action: 'created' | 'updated' | 'deleted' | 'status_changed';
+  summary: string;
+  created_at: string;
+}

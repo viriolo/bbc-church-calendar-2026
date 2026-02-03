@@ -59,7 +59,33 @@ async function migrate() {
   await sql`
     CREATE INDEX IF NOT EXISTS idx_events_status ON events(status)
   `;
-  console.log('✓ indexes created');
+
+  // event_comments: notes on events (admins/collaborators)
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_comments (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      author VARCHAR(100) NOT NULL DEFAULT 'Admin',
+      content TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_event_comments_event_id ON event_comments(event_id)`;
+  console.log('✓ event_comments table created');
+
+  // event_activity_log: who changed what, when (event_id SET NULL on delete so history is kept)
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_activity_log (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
+      actor VARCHAR(100) NOT NULL DEFAULT 'Admin',
+      action VARCHAR(50) NOT NULL CHECK (action IN ('created', 'updated', 'deleted', 'status_changed')),
+      summary TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_event_activity_log_event_id ON event_activity_log(event_id)`;
+  console.log('✓ event_activity_log table created');
 
   console.log('Migration complete!');
 }

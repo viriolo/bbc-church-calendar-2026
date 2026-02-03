@@ -34,6 +34,7 @@ interface EventsManagementProps {
   onEventsChanged?: () => void;
   onAddEvent?: () => void;
   onEditEvent?: (event: Event) => void;
+  onViewEvent?: (event: Event) => void;
 }
 
 type FilterType = 'all' | 'drafts' | 'sponsorship' | 'pending' | 'confirmed';
@@ -61,7 +62,7 @@ const statusConfig: Record<string, { label: string; className: string; icon: Rea
   },
 };
 
-export default function EventsManagement({ events, loading, onAddEvent, onEditEvent }: EventsManagementProps) {
+export default function EventsManagement({ events, loading, onAddEvent, onEditEvent, onViewEvent }: EventsManagementProps) {
   const { isAdmin } = useAdmin();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -219,7 +220,10 @@ export default function EventsManagement({ events, loading, onAddEvent, onEditEv
                     duration: 0.5,
                     ease: [0.16, 1, 0.3, 1]
                   }}
-                  onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                  onClick={() => {
+                    if (onViewEvent) onViewEvent(event);
+                    else setExpandedEvent(isExpanded ? null : event.id);
+                  }}
                   className={`group relative bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300 cursor-pointer ${
                     isExpanded ? 'shadow-xl border-blue-300' : 'shadow-md hover:shadow-lg'
                   } ${needsUrgent ? 'border-l-4 border-l-rose-500' : ''}`}
