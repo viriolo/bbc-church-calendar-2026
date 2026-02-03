@@ -14,7 +14,8 @@ import {
   ChevronDown,
   ChevronUp,
   Plus,
-  Pencil
+  Pencil,
+  MessageSquare
 } from 'lucide-react';
 import type { Event } from '../types';
 import { format, isValid } from 'date-fns';
@@ -266,15 +267,27 @@ export default function EventsManagement({ events, loading, onAddEvent, onEditEv
                         </div>
                       </div>
 
-                      {/* Status Badge + Expand Arrow */}
+                      {/* Status Badge + View details / Expand */}
                       <div className="flex items-center gap-3">
+                        {onViewEvent && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onViewEvent(event); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            View details
+                          </button>
+                        )}
                         <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${status.className}`}>
                           <StatusIcon className="w-4 h-4" />
                           {status.label}
                         </span>
-                        <div className="text-slate-400">
-                          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                        </div>
+                        {!onViewEvent && (
+                          <div className="text-slate-400">
+                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

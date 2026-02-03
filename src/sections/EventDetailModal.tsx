@@ -179,7 +179,9 @@ export default function EventDetailModal({ isOpen, onClose, event, onEdit, onSav
                 ) : (
                   <ul className="space-y-3 mb-4">
                     {comments.length === 0 ? (
-                      <li className="text-sm text-slate-500">No comments yet.</li>
+                      <li className="text-sm text-slate-500">
+                        No comments yet. Add a note below to coordinate with the team.
+                      </li>
                     ) : (
                       comments.map((c) => (
                         <li key={c.id} className="pl-3 border-l-2 border-slate-200">
@@ -198,7 +200,7 @@ export default function EventDetailModal({ isOpen, onClose, event, onEdit, onSav
                       type="text"
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Add a note…"
+                      placeholder="e.g. Waiting for Pastor to confirm the date…"
                       className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                       disabled={submittingComment}
                     />
@@ -231,12 +233,14 @@ export default function EventDetailModal({ isOpen, onClose, event, onEdit, onSav
                 ) : (
                   <ul className="space-y-2">
                     {activity.length === 0 ? (
-                      <li className="text-sm text-slate-500">No activity yet.</li>
+                      <li className="text-sm text-slate-500">
+                        No activity yet. Changes you make when editing this event will appear here.
+                      </li>
                     ) : (
                       activity.map((a) => (
                         <li key={a.id} className="flex gap-3 text-sm">
-                          <span className="text-slate-400 shrink-0">
-                            {safeFormat(new Date(a.created_at), 'MMM d, h:mm a')}
+                          <span className="text-slate-400 shrink-0 whitespace-nowrap">
+                            {safeFormat(new Date(a.created_at), 'MMM d, yyyy \'at\' h:mm a')}
                           </span>
                           <span className="text-slate-700">
                             {a.summary}

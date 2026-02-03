@@ -12,7 +12,8 @@ import {
   HeartHandshake,
   AlertCircle,
   Plus,
-  Pencil
+  Pencil,
+  MessageSquare
 } from 'lucide-react';
 import type { Event } from '../types';
 import { getQuarterColorForMonth } from '../App';
@@ -329,11 +330,11 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent, on
                           tabIndex={0}
                           onClick={() => onViewEvent?.(event)}
                           onKeyDown={(e) => e.key === 'Enter' && onViewEvent?.(event)}
-                          className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100/80 transition-colors"
+                          className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100/80 transition-colors group/card"
                         >
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-semibold text-slate-900">{event.title}</h4>
+                              <h4 className="font-semibold text-slate-900 group-hover/card:text-blue-800 transition-colors">{event.title}</h4>
                               <span className={`flex items-center gap-1 text-xs font-medium ${status.color}`}>
                                 <StatusIcon className="w-3 h-3" />
                                 {status.label}
@@ -356,16 +357,24 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent, on
                                 </span>
                               )}
                             </div>
-                            {isAdmin && onEditEvent && (
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
-                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                                Edit
-                              </button>
-                            )}
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              {onViewEvent && (
+                                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  View details & comments
+                                </span>
+                              )}
+                              {isAdmin && onEditEvent && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  Edit
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
