@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2, Calendar, Save } from 'lucide-react';
 import type { Event } from '../types';
 import { createEvent, updateEvent, deleteEvent } from '../lib/api';
+import { useAdmin } from '../lib/admin';
 import { format, isValid } from 'date-fns';
 
 interface EventFormModalProps {
@@ -41,7 +42,9 @@ const ministryOptions = [
 ];
 
 export default function EventFormModal({ isOpen, onClose, onSaved, event, prefillDate }: EventFormModalProps) {
+  const { isAdmin } = useAdmin();
   const isEdit = !!event;
+  const actor = isAdmin ? 'Admin' : 'User';
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -96,6 +99,7 @@ export default function EventFormModal({ isOpen, onClose, onSaved, event, prefil
         description: description.trim() || undefined,
         budget: budget ? Number(budget) : undefined,
         category: category || undefined,
+        actor,
       };
 
       if (isEdit && event) {
@@ -117,7 +121,7 @@ export default function EventFormModal({ isOpen, onClose, onSaved, event, prefil
     setDeleting(true);
     setError('');
     try {
-      await deleteEvent(Number(event.id));
+      await deleteEvent(Number(event.id), actor);
       onSaved();
       onClose();
     } catch (err) {

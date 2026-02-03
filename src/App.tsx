@@ -7,6 +7,7 @@ import CalendarGrid from './sections/CalendarGrid';
 import Footer from './sections/Footer';
 import LoginModal from './sections/LoginModal';
 import EventFormModal from './sections/EventFormModal';
+import EventDetailModal from './sections/EventDetailModal';
 import { AdminProvider } from './lib/admin';
 import type { Quarter, Event, Stats, CalendarView } from './types';
 import { isAfter, isBefore, addDays, isSameMonth, isValid } from 'date-fns';
@@ -151,6 +152,8 @@ function App() {
   const [eventFormOpen, setEventFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [prefillDate, setPrefillDate] = useState('');
+  // Event detail modal (comments + activity)
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null);
 
   const handleAddEvent = () => {
     setEditingEvent(null);
@@ -171,7 +174,12 @@ function App() {
   const handleEditEvent = (event: Event) => {
     setEditingEvent(event);
     setPrefillDate('');
+    setDetailEvent(null);
     setEventFormOpen(true);
+  };
+
+  const handleViewEvent = (event: Event) => {
+    setDetailEvent(event);
   };
 
   const handleEventFormClose = () => {
@@ -350,6 +358,7 @@ function App() {
               onEventsChanged={loadData}
               onAddEvent={handleAddEvent}
               onEditEvent={handleEditEvent}
+              onViewEvent={handleViewEvent}
             />
           </section>
 
@@ -358,6 +367,7 @@ function App() {
               events={eventsForSelectedQuarter}
               onAddEventOnDate={handleAddEventOnDate}
               onEditEvent={handleEditEvent}
+              onViewEvent={handleViewEvent}
             />
           </section>
 
@@ -381,6 +391,13 @@ function App() {
           onSaved={loadData}
           event={editingEvent}
           prefillDate={prefillDate}
+        />
+        <EventDetailModal
+          isOpen={!!detailEvent}
+          onClose={() => setDetailEvent(null)}
+          event={detailEvent}
+          onEdit={handleEditEvent}
+          onSaved={loadData}
         />
       </div>
     </AdminProvider>

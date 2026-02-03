@@ -77,6 +77,7 @@ export async function createEvent(event: {
   budget?: number;
   sponsor?: string;
   category?: string;
+  actor?: string;
 }): Promise<EventRow> {
   const res = await fetch(`${API_BASE}/events`, {
     method: 'POST',
@@ -102,6 +103,7 @@ export async function updateEvent(
     budget: number | null;
     sponsor: string | null;
     category: string;
+    actor?: string;
   }>
 ): Promise<EventRow> {
   const res = await fetch(`${API_BASE}/events?id=${id}`, {
@@ -116,8 +118,9 @@ export async function updateEvent(
   return res.json();
 }
 
-export async function deleteEvent(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE}/events?id=${id}`, {
+export async function deleteEvent(id: number, actor?: string): Promise<void> {
+  const qs = actor ? `id=${id}&actor=${encodeURIComponent(actor)}` : `id=${id}`;
+  const res = await fetch(`${API_BASE}/events?${qs}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
@@ -139,5 +142,32 @@ export async function fetchStats(): Promise<StatsRow> {
   if (!res.ok) {
     throw new Error(`Failed to fetch stats: ${res.status}`);
   }
+  return res.json();
+}
+
+// ── Comments ──
+export async function fetchComments(eventId: number): Promise<{ id: number; event_id: number; author: string; content: string; created_at: string }[]> {
+  const res = await fetch(`${API_BASE}/comments?event_id=${eventId}`);
+  if (!res.ok) throw new Error(`Failed to fetch comments: ${res.status}`);
+  return res.json();
+}
+
+export async function addComment(eventId: number, content: string, author?: string): Promise<{ id: number; event_id: number; author: string; content: string; created_at: string }> {
+  const res = await fetch(`${API_BASE}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_id: eventId, content, author }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to add comment: ${res.status}`);
+  }
+  return res.json();
+}
+
+// ── Activity log ──
+export async function fetchActivity(eventId: number): Promise<{ id: number; event_id: number | null; actor: string; action: string; summary: string; created_at: string }[]> {
+  const res = await fetch(`${API_BASE}/activity?event_id=${eventId}`);
+  if (!res.ok) throw new Error(`Failed to fetch activity: ${res.status}`);
   return res.json();
 }

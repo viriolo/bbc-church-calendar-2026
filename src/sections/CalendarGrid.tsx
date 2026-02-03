@@ -44,6 +44,7 @@ interface CalendarGridProps {
   events: Event[];
   onAddEventOnDate?: (date: Date) => void;
   onEditEvent?: (event: Event) => void;
+  onViewEvent?: (event: Event) => void;
 }
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -75,7 +76,7 @@ const statusConfig: Record<string, { label: string; icon: React.ElementType; col
   'needs-sponsor': { label: 'Needs Sponsor', icon: HeartHandshake, color: 'text-rose-600' },
 };
 
-export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: CalendarGridProps) {
+export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent, onViewEvent }: CalendarGridProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 1, 1));
@@ -322,7 +323,14 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: 
                       const status = statusConfig[event.status];
                       const StatusIcon = status.icon;
                       return (
-                        <div key={event.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <div
+                          key={event.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => onViewEvent?.(event)}
+                          onKeyDown={(e) => e.key === 'Enter' && onViewEvent?.(event)}
+                          className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100/80 transition-colors"
+                        >
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-semibold text-slate-900">{event.title}</h4>
@@ -350,6 +358,7 @@ export default function CalendarGrid({ events, onAddEventOnDate, onEditEvent }: 
                             </div>
                             {isAdmin && onEditEvent && (
                               <button
+                                type="button"
                                 onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
                                 className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                               >

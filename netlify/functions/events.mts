@@ -51,7 +51,8 @@ export default async function handler(req: Request, _context: Context) {
     // POST /api/events — create a new event
     if (req.method === 'POST') {
       const body = await req.json();
-      const { title, date, end_date, status, ministry, description, budget, sponsor, category } = body;
+      const { title, date, end_date, status, ministry, description, budget, sponsor, category, actor } = body;
+      const who = actor || 'Admin';
 
       if (!title || !date) {
         return errorResponse('title and date are required', 400);
@@ -72,8 +73,13 @@ export default async function handler(req: Request, _context: Context) {
         )
         RETURNING *
       `;
+      const event = result[0];
+      await sql`
+        INSERT INTO event_activity_log (event_id, actor, action, summary)
+        VALUES (${event.id}, ${who}, 'created', ${`Event '${String(title).replace(/'/g, "''")}' created`})
+      `;
 
-      return jsonResponse(result[0], 201);
+      return jsonResponse(event, 201);
     }
 
     // PUT /api/events?id=X — update an event
@@ -84,29 +90,61 @@ export default async function handler(req: Request, _context: Context) {
       }
 
       const body = await req.json();
-      const { title, date, end_date, status, ministry, description, budget, sponsor, category } = body;
+      const { title, date, end_date, status, ministry, description, budget, sponsor, category, actor } = body;
+      const who = actor || 'Admin';
+
+      const existing = await sql`SELECT * FROM events WHERE id = ${id}`;
+      if (existing.length === 0) {
+        return errorResponse('Event not found', 404);
+      }
+      const old = existing[0];
 
       const result = await sql`
         UPDATE events SET
-          title = COALESCE(${title || null}, title),
-          date = COALESCE(${date || null}, date),
-          end_date = ${end_date ?? null},
-          status = COALESCE(${status || null}, status),
-          ministry = COALESCE(${ministry || null}, ministry),
-          description = COALESCE(${description || null}, description),
-          budget = ${budget ?? null},
-          sponsor = ${sponsor ?? null},
-          category = COALESCE(${category || null}, category),
+          title = COALESCE(${title ?? null}, title),
+          date = COALESCE(${date ?? null}, date),
+          end_date = ${end_date !== undefined ? end_date : old.end_date},
+          status = COALESCE(${status ?? null}, status),
+          ministry = COALESCE(${ministry ?? null}, ministry),
+          description = COALESCE(${description ?? null}, description),
+          budget = ${budget !== undefined ? budget : old.budget},
+          sponsor = ${sponsor !== undefined ? sponsor : old.sponsor},
+          category = COALESCE(${category ?? null}, category),
           updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
       `;
+      const event = result[0];
 
-      if (result.length === 0) {
-        return errorResponse('Event not found', 404);
+      const summaries: string[] = [];
+      if (status != null && String(old.status) !== String(status)) {
+        summaries.push(`status changed from ${old.status} to ${status}`);
+      }
+      if (title != null && String(old.title) !== String(title)) {
+        summaries.push(`title updated to '${String(title).replace(/'/g, "''")}'`);
+      }
+      if (date != null && String(old.date) !== String(date)) {
+        summaries.push(`date changed to ${date}`);
+      }
+      if (ministry !== undefined && String(old.ministry ?? '') !== String(ministry ?? '')) {
+        summaries.push(`ministry updated`);
+      }
+      if (description !== undefined && String(old.description ?? '') !== String(description ?? '')) {
+        summaries.push(`description updated`);
+      }
+      if (budget !== undefined && Number(old.budget) !== Number(budget)) {
+        summaries.push(`budget updated`);
+      }
+      if (summaries.length > 0) {
+        const action = summaries.some((s) => s.startsWith('status changed')) ? 'status_changed' : 'updated';
+        const summary = `Event '${String(event.title).replace(/'/g, "''")}' — ${summaries.join('; ')}`;
+        await sql`
+          INSERT INTO event_activity_log (event_id, actor, action, summary)
+          VALUES (${event.id}, ${who}, ${action}, ${summary})
+        `;
       }
 
-      return jsonResponse(result[0]);
+      return jsonResponse(event);
     }
 
     // DELETE /api/events?id=X — delete an event
@@ -115,14 +153,21 @@ export default async function handler(req: Request, _context: Context) {
       if (!id) {
         return errorResponse('id query parameter is required', 400);
       }
+      const actor = url.searchParams.get('actor') || 'Admin';
+
+      const existing = await sql`SELECT * FROM events WHERE id = ${id}`;
+      if (existing.length === 0) {
+        return errorResponse('Event not found', 404);
+      }
+      const event = existing[0];
+      await sql`
+        INSERT INTO event_activity_log (event_id, actor, action, summary)
+        VALUES (${id}, ${actor}, 'deleted', ${`Event '${String(event.title).replace(/'/g, "''")}' deleted`})
+      `;
 
       const result = await sql`
         DELETE FROM events WHERE id = ${id} RETURNING *
       `;
-
-      if (result.length === 0) {
-        return errorResponse('Event not found', 404);
-      }
 
       return jsonResponse({ deleted: true, event: result[0] });
     }
