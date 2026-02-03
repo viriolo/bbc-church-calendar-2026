@@ -2,11 +2,13 @@ export interface Event {
   id: string;
   title: string;
   date: Date;
+  endDate?: Date;
   status: 'confirmed' | 'pending' | 'draft' | 'needs-sponsor';
   ministry?: string;
   description?: string;
   budget?: number;
   sponsor?: string;
+  category?: 'worship' | 'prayer' | 'youth' | 'fellowship' | 'training' | 'meetings' | 'guest' | 'special';
 }
 
 export interface Ministry {
@@ -21,6 +23,7 @@ export interface Quarter {
   id: number;
   name: string;
   theme: string;
+  pathway: string;
   study: string;
   focus: string;
   scripture: string;
@@ -30,6 +33,8 @@ export interface Quarter {
   totalEvents: number;
   confirmedEvents: number;
   pendingEvents: number;
+  color: string;
+  colorHex: string;
 }
 
 export interface Budget {
@@ -55,4 +60,5 @@ export interface Stats {
   totalEvents: number;
   confirmedEvents: number;
   pendingEvents: number;
+  thisMonth: number;
 }

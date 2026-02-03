@@ -11,7 +11,8 @@ import {
   HeartHandshake,
   Search,
   Clock,
-  MoreHorizontal
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { Event } from '../types';
 import { format } from 'date-fns';
@@ -20,26 +21,26 @@ interface EventsManagementProps {
   events: Event[];
 }
 
-type FilterType = 'all' | 'drafts' | 'sponsorship' | 'pending';
+type FilterType = 'all' | 'drafts' | 'sponsorship' | 'pending' | 'confirmed';
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  confirmed: { 
-    label: 'Confirmed', 
+  confirmed: {
+    label: 'Confirmed',
     className: 'status-confirmed',
     icon: CheckCircle2
   },
-  pending: { 
-    label: 'Pending', 
+  pending: {
+    label: 'Pending',
     className: 'status-pending animate-gentle-pulse',
     icon: Clock
   },
-  draft: { 
-    label: 'Draft', 
+  draft: {
+    label: 'Draft',
     className: 'status-draft',
     icon: FileEdit
   },
-  'needs-sponsor': { 
-    label: 'Needs Sponsor', 
+  'needs-sponsor': {
+    label: 'Needs Sponsor',
     className: 'status-sponsor',
     icon: HeartHandshake
   },
@@ -50,26 +51,30 @@ export default function EventsManagement({ events }: EventsManagementProps) {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [hoveredEvent, setHoveredEvent] = useState<string | null>(null);
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 
   const filters: { id: FilterType; label: string; count: number }[] = [
     { id: 'all', label: 'All Events', count: events.length },
+    { id: 'confirmed', label: 'Confirmed', count: events.filter(e => e.status === 'confirmed').length },
+    { id: 'pending', label: 'Pending', count: events.filter(e => e.status === 'pending').length },
     { id: 'drafts', label: 'Drafts', count: events.filter(e => e.status === 'draft').length },
     { id: 'sponsorship', label: 'Sponsorship', count: events.filter(e => e.status === 'needs-sponsor').length },
-    { id: 'pending', label: 'Pending', count: events.filter(e => e.status === 'pending').length },
   ];
 
-  const filteredEvents = events.filter(event => {
-    const matchesFilter = activeFilter === 'all' || 
-      (activeFilter === 'drafts' && event.status === 'draft') ||
-      (activeFilter === 'sponsorship' && event.status === 'needs-sponsor') ||
-      (activeFilter === 'pending' && event.status === 'pending');
-    
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.ministry?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesFilter && matchesSearch;
-  });
+  const filteredEvents = events
+    .filter(event => {
+      const matchesFilter = activeFilter === 'all' ||
+        (activeFilter === 'confirmed' && event.status === 'confirmed') ||
+        (activeFilter === 'drafts' && event.status === 'draft') ||
+        (activeFilter === 'sponsorship' && event.status === 'needs-sponsor') ||
+        (activeFilter === 'pending' && event.status === 'pending');
+
+      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.ministry?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
     <section ref={ref} className="py-12 bg-white relative">
@@ -90,8 +95,6 @@ export default function EventsManagement({ events }: EventsManagementProps) {
             <h2 className="text-3xl font-bold text-slate-900">Upcoming Events</h2>
             <p className="mt-2 text-slate-600">View and track church events and activities</p>
           </div>
-
-
         </motion.div>
 
         {/* Search and Filters */}
@@ -156,7 +159,7 @@ export default function EventsManagement({ events }: EventsManagementProps) {
             {filteredEvents.map((event, index) => {
               const status = statusConfig[event.status];
               const StatusIcon = status.icon;
-              const isHovered = hoveredEvent === event.id;
+              const isExpanded = expandedEvent === event.id;
               const needsUrgent = event.status === 'needs-sponsor';
 
               return (
@@ -165,15 +168,14 @@ export default function EventsManagement({ events }: EventsManagementProps) {
                   initial={{ opacity: 0, x: -30 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
                   exit={{ opacity: 0, x: 30 }}
-                  transition={{ 
-                    delay: index * 0.1,
+                  transition={{
+                    delay: index * 0.05,
                     duration: 0.5,
                     ease: [0.16, 1, 0.3, 1]
                   }}
-                  onMouseEnter={() => setHoveredEvent(event.id)}
-                  onMouseLeave={() => setHoveredEvent(null)}
-                  className={`group relative bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300 ${
-                    isHovered ? 'shadow-xl border-blue-300' : 'shadow-md'
+                  onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                  className={`group relative bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300 cursor-pointer ${
+                    isExpanded ? 'shadow-xl border-blue-300' : 'shadow-md hover:shadow-lg'
                   } ${needsUrgent ? 'border-l-4 border-l-rose-500' : ''}`}
                 >
                   <div className="p-5">
@@ -188,7 +190,7 @@ export default function EventsManagement({ events }: EventsManagementProps) {
                             {format(event.date, 'MMM d')}
                           </p>
                           <p className="text-sm text-slate-500">
-                            {format(event.date, 'yyyy')}
+                            {format(event.date, 'EEEE')}
                           </p>
                         </div>
                       </div>
@@ -214,54 +216,36 @@ export default function EventsManagement({ events }: EventsManagementProps) {
                         </div>
                       </div>
 
-                      {/* Status Badge */}
+                      {/* Status Badge + Expand Arrow */}
                       <div className="flex items-center gap-3">
                         <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${status.className}`}>
                           <StatusIcon className="w-4 h-4" />
                           {status.label}
                         </span>
-
-                        {/* Action Buttons - Show on Hover */}
-                        <AnimatePresence>
-                          {isHovered && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              className="flex items-center gap-2"
-                            >
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors"
-                              >
-                                <FileEdit className="w-4 h-4" />
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200 transition-colors"
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </motion.button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        <div className="text-slate-400">
+                          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Expandable Details */}
                   <AnimatePresence>
-                    {isHovered && event.description && (
+                    {isExpanded && event.description && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         className="bg-slate-50 border-t border-slate-100"
                       >
-                        <div className="p-4">
-                          <p className="text-sm text-slate-600">{event.description}</p>
+                        <div className="p-5">
+                          <p className="text-sm text-slate-600 mb-3">{event.description}</p>
+                          <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+                            <span>Date: {format(event.date, 'EEEE, MMMM d, yyyy')}</span>
+                            {event.ministry && <span>Ministry: {event.ministry}</span>}
+                            {event.category && <span className="capitalize">Category: {event.category}</span>}
+                            {event.budget && <span>Budget: K{event.budget.toLocaleString()}</span>}
+                          </div>
                         </div>
                       </motion.div>
                     )}

@@ -1,17 +1,25 @@
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useRef, useState } from 'react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  X,
+  Clock,
+  Users,
+  CheckCircle2,
+  FileEdit,
+  HeartHandshake,
+  AlertCircle
 } from 'lucide-react';
 import type { Event } from '../types';
-import { 
-  format, 
-  startOfMonth, 
-  endOfMonth, 
-  startOfWeek, 
-  endOfWeek, 
+import { getQuarterColorForMonth } from '../App';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
   eachDayOfInterval,
   isSameMonth,
   isSameDay,
@@ -31,11 +39,34 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+const quarterLabels: Record<number, string> = {
+  0: 'Q1: Witness',
+  1: 'Q1: Witness',
+  2: 'Q1: Witness',
+  3: 'Q2: Bible',
+  4: 'Q2: Bible',
+  5: 'Q2: Bible',
+  6: 'Q3: Care',
+  7: 'Q3: Care',
+  8: 'Q3: Care',
+  9: 'Q4: Freedom',
+  10: 'Q4: Freedom',
+  11: 'Q4: Freedom',
+};
+
+const statusConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+  confirmed: { label: 'Confirmed', icon: CheckCircle2, color: 'text-emerald-600' },
+  pending: { label: 'Pending', icon: Clock, color: 'text-amber-600' },
+  draft: { label: 'Draft', icon: FileEdit, color: 'text-slate-500' },
+  'needs-sponsor': { label: 'Needs Sponsor', icon: HeartHandshake, color: 'text-rose-600' },
+};
+
 export default function CalendarGrid({ events }: CalendarGridProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 1, 1));
   const [hoveredDay, setHoveredDay] = useState<Date | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -49,6 +80,17 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+
+  const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
+
+  // Get quarter color classes for the current month
+  const currentMonthQuarter = getQuarterColorForMonth(currentMonth.getMonth());
+  const quarterBorderColors: Record<string, string> = {
+    emerald: 'border-emerald-300',
+    blue: 'border-blue-300',
+    amber: 'border-amber-300',
+    orange: 'border-orange-300',
+  };
 
   return (
     <section ref={ref} className="py-12 relative overflow-hidden">
@@ -64,7 +106,9 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
         >
           <div>
             <h2 className="text-3xl font-bold text-slate-900">Calendar</h2>
-            <p className="mt-2 text-slate-600">View and manage church events</p>
+            <p className="mt-2 text-slate-600">
+              {quarterLabels[currentMonth.getMonth()]} &middot; Click a day to see events
+            </p>
           </div>
 
           {/* Month Navigation */}
@@ -77,13 +121,13 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
             >
               <ChevronLeft className="w-5 h-5 text-slate-600" />
             </motion.button>
-            
-            <div className="px-6 py-3 rounded-xl bg-white shadow-lg border border-slate-200">
+
+            <div className={`px-6 py-3 rounded-xl bg-white shadow-lg border ${quarterBorderColors[currentMonthQuarter.color] || 'border-slate-200'}`}>
               <span className="text-lg font-semibold text-slate-800">
                 {format(currentMonth, 'MMMM yyyy')}
               </span>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -123,25 +167,33 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
               const isCurrentMonth = isSameMonth(day, currentMonth);
               const isTodayDate = isToday(day);
               const isHovered = hoveredDay && isSameDay(day, hoveredDay);
+              const isSelected = selectedDay && isSameDay(day, selectedDay);
 
               return (
                 <motion.div
                   key={day.toISOString()}
                   initial={{ opacity: 0, rotateX: -15 }}
                   animate={isInView ? { opacity: 1, rotateX: 0 } : {}}
-                  transition={{ 
+                  transition={{
                     delay: 0.1 + index * 0.02,
                     duration: 0.4,
                     ease: [0.16, 1, 0.3, 1]
                   }}
                   onMouseEnter={() => setHoveredDay(day)}
                   onMouseLeave={() => setHoveredDay(null)}
+                  onClick={() => {
+                    if (dayEvents.length > 0) {
+                      setSelectedDay(isSelected ? null : day);
+                    }
+                  }}
                   className={`
                     relative min-h-[100px] p-2 border-b border-r border-slate-100
-                    transition-all duration-300 cursor-pointer day-cell
+                    transition-all duration-300 day-cell
                     ${!isCurrentMonth ? 'bg-slate-50/50' : 'bg-white'}
                     ${isTodayDate ? 'bg-blue-50/50' : ''}
                     ${isHovered ? 'bg-blue-50' : ''}
+                    ${isSelected ? 'bg-blue-100 ring-2 ring-blue-400 ring-inset' : ''}
+                    ${dayEvents.length > 0 ? 'cursor-pointer' : ''}
                   `}
                 >
                   {/* Day Number */}
@@ -149,28 +201,33 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
                     <span
                       className={`
                         w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium
-                        ${isTodayDate 
-                          ? 'bg-blue-600 text-white' 
-                          : isCurrentMonth 
-                            ? 'text-slate-700' 
+                        ${isTodayDate
+                          ? 'bg-blue-600 text-white'
+                          : isCurrentMonth
+                            ? 'text-slate-700'
                             : 'text-slate-400'
                         }
                       `}
                     >
                       {format(day, 'd')}
                     </span>
+                    {dayEvents.length > 0 && (
+                      <span className="text-xs text-slate-400 font-medium">
+                        {dayEvents.length}
+                      </span>
+                    )}
                   </div>
 
                   {/* Event Indicators */}
-                  <div className="mt-2 space-y-1">
-                    {dayEvents.slice(0, 3).map((event, idx) => (
+                  <div className="mt-1 space-y-1">
+                    {dayEvents.slice(0, 2).map((event, idx) => (
                       <motion.div
                         key={event.id}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.1 }}
                         className={`
-                          text-xs px-2 py-1 rounded-md truncate font-medium
+                          text-xs px-2 py-0.5 rounded-md truncate font-medium
                           ${event.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : ''}
                           ${event.status === 'pending' ? 'bg-amber-100 text-amber-700' : ''}
                           ${event.status === 'draft' ? 'bg-slate-100 text-slate-700' : ''}
@@ -180,26 +237,79 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
                         {event.title}
                       </motion.div>
                     ))}
-                    {dayEvents.length > 3 && (
-                      <div className="text-xs text-slate-500 px-2">
-                        +{dayEvents.length - 3} more
+                    {dayEvents.length > 2 && (
+                      <div className="text-xs text-blue-600 px-2 font-medium">
+                        +{dayEvents.length - 2} more
                       </div>
                     )}
                   </div>
-
-                  {/* Hover Effect */}
-                  {isHovered && dayEvents.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="absolute inset-0 bg-blue-100/50 z-0"
-                    />
-                  )}
                 </motion.div>
               );
             })}
           </div>
         </motion.div>
+
+        {/* Selected Day Detail Panel */}
+        <AnimatePresence>
+          {selectedDay && selectedDayEvents.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="mt-4 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {format(selectedDay, 'EEEE, MMMM d, yyyy')}
+                  </h3>
+                  <button
+                    onClick={() => setSelectedDay(null)}
+                    className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {selectedDayEvents.map((event) => {
+                    const status = statusConfig[event.status];
+                    const StatusIcon = status.icon;
+                    return (
+                      <div key={event.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-slate-900">{event.title}</h4>
+                            <span className={`flex items-center gap-1 text-xs font-medium ${status.color}`}>
+                              <StatusIcon className="w-3 h-3" />
+                              {status.label}
+                            </span>
+                          </div>
+                          {event.description && (
+                            <p className="text-sm text-slate-600 mb-2">{event.description}</p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-3">
+                            {event.ministry && (
+                              <span className="flex items-center gap-1 text-xs text-slate-500">
+                                <Users className="w-3 h-3" />
+                                {event.ministry}
+                              </span>
+                            )}
+                            {event.budget && (
+                              <span className="flex items-center gap-1 text-xs text-slate-500">
+                                <AlertCircle className="w-3 h-3" />
+                                Budget: K{event.budget.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Legend */}
         <motion.div
@@ -221,7 +331,7 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
           ))}
         </motion.div>
 
-        {/* Year Overview - Mini Months */}
+        {/* Year Overview - Mini Months with Quarter Colors */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -229,30 +339,62 @@ export default function CalendarGrid({ events }: CalendarGridProps) {
           className="mt-8"
         >
           <h3 className="text-xl font-bold text-slate-900 mb-6 text-center">2026 Overview</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-3">
             {monthNames.map((month, index) => {
               const isCurrent = index === currentMonth.getMonth();
+              const quarterColor = getQuarterColorForMonth(index);
+              const monthEventCount = events.filter(e => e.date.getMonth() === index && e.date.getFullYear() === 2026).length;
+
+              const bgClasses: Record<string, string> = {
+                emerald: 'bg-emerald-50 border-emerald-200 hover:border-emerald-400',
+                blue: 'bg-blue-50 border-blue-200 hover:border-blue-400',
+                amber: 'bg-amber-50 border-amber-200 hover:border-amber-400',
+                orange: 'bg-orange-50 border-orange-200 hover:border-orange-400',
+              };
+              const activeBgClasses: Record<string, string> = {
+                emerald: 'bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-emerald-600/30',
+                blue: 'bg-gradient-to-br from-blue-600 to-blue-800 shadow-blue-600/30',
+                amber: 'bg-gradient-to-br from-amber-500 to-amber-700 shadow-amber-500/30',
+                orange: 'bg-gradient-to-br from-orange-500 to-orange-700 shadow-orange-500/30',
+              };
+
               return (
                 <motion.div
                   key={month}
-                  whileHover={{ scale: 1.05, y: -4 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentMonth(new Date(2026, index, 1))}
                   className={`
-                    cursor-pointer rounded-xl p-4 text-center transition-all duration-300
-                    ${isCurrent 
-                      ? 'bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-600/30' 
-                      : 'bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg'
+                    cursor-pointer rounded-xl p-3 text-center transition-all duration-300 border
+                    ${isCurrent
+                      ? `${activeBgClasses[quarterColor.color]} text-white shadow-lg`
+                      : `${bgClasses[quarterColor.color]}`
                     }
                   `}
                 >
-                  <CalendarIcon className={`w-6 h-6 mx-auto mb-2 ${isCurrent ? 'text-white' : 'text-slate-400'}`} />
-                  <p className={`font-semibold ${isCurrent ? 'text-white' : 'text-slate-700'}`}>
+                  <p className={`font-semibold text-sm ${isCurrent ? 'text-white' : 'text-slate-700'}`}>
                     {month.slice(0, 3)}
+                  </p>
+                  <p className={`text-xs mt-1 ${isCurrent ? 'text-white/80' : 'text-slate-400'}`}>
+                    {monthEventCount} events
                   </p>
                 </motion.div>
               );
             })}
+          </div>
+          {/* Quarter Legend */}
+          <div className="mt-4 flex flex-wrap gap-4 justify-center">
+            {[
+              { label: 'Q1: Witness', color: 'bg-emerald-200' },
+              { label: 'Q2: Bible', color: 'bg-blue-200' },
+              { label: 'Q3: Care', color: 'bg-amber-200' },
+              { label: 'Q4: Freedom', color: 'bg-orange-200' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-sm ${item.color}`} />
+                <span className="text-xs text-slate-500">{item.label}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>

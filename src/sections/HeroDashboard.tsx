@@ -328,7 +328,9 @@ export default function HeroDashboard({ quarter, stats }: HeroDashboardProps) {
                   <Calendar className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-medium text-slate-500">This Month</span>
                 </div>
-                <p className="text-2xl font-bold text-slate-800">18</p>
+                <p className="text-2xl font-bold text-slate-800">
+                  <AnimatedNumber value={stats.thisMonth} />
+                </p>
               </div>
             </div>
           </div>
