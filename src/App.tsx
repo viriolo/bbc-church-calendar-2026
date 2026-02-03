@@ -54,12 +54,36 @@ const fallbackQuarters: Quarter[] = [
 
 // ── Converters: DB row → frontend type ──
 
+function safeDate(value: unknown): Date {
+  if (!value) return new Date(2026, 0, 1); // fallback to Jan 1 2026
+
+  const str = String(value);
+
+  // If it's already an ISO timestamp, parse directly
+  let d = new Date(str);
+  if (!isNaN(d.getTime())) return d;
+
+  // Try bare date with time component
+  d = new Date(str + 'T00:00:00');
+  if (!isNaN(d.getTime())) return d;
+
+  // Try extracting just the date part (e.g. from "2026-01-05 and extra stuff")
+  const match = str.match(/(\d{4}-\d{2}-\d{2})/);
+  if (match) {
+    d = new Date(match[1] + 'T00:00:00');
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // Absolute fallback — never return an invalid Date
+  return new Date(2026, 0, 1);
+}
+
 function eventRowToEvent(row: EventRow): Event {
   return {
     id: String(row.id),
     title: row.title,
-    date: new Date(row.date + 'T00:00:00'),
-    endDate: row.end_date ? new Date(row.end_date + 'T00:00:00') : undefined,
+    date: safeDate(row.date),
+    endDate: row.end_date ? safeDate(row.end_date) : undefined,
     status: row.status as Event['status'],
     ministry: row.ministry ?? undefined,
     description: row.description ?? undefined,
@@ -78,8 +102,8 @@ function quarterRowToQuarter(row: QuarterRow): Quarter {
     study: row.study,
     focus: row.focus,
     scripture: row.scripture,
-    startDate: new Date(row.start_date + 'T00:00:00'),
-    endDate: new Date(row.end_date + 'T00:00:00'),
+    startDate: safeDate(row.start_date),
+    endDate: safeDate(row.end_date),
     progress: Number(row.progress),
     totalEvents: Number(row.total_events),
     confirmedEvents: Number(row.confirmed_events),
@@ -152,13 +176,32 @@ function App() {
         fetchQuarters(),
         fetchStats(),
       ]);
-      setEvents(eventsData.map(eventRowToEvent));
-      setQuarters(quartersData.map(quarterRowToQuarter));
-      setApiStats(statsRowToStats(statsData));
+      // Log first row to help debug date format issues
+      if (eventsData.length > 0) {
+        console.log('[BBC Calendar] Sample event row from API:', JSON.stringify(eventsData[0]));
+      }
+      const convertedEvents: Event[] = [];
+      for (const row of eventsData) {
+        try {
+          convertedEvents.push(eventRowToEvent(row));
+        } catch (e) {
+          console.warn('[BBC Calendar] Failed to convert event row:', row, e);
+        }
+      }
+      setEvents(convertedEvents);
+      try {
+        setQuarters(quartersData.map(quarterRowToQuarter));
+      } catch (e) {
+        console.warn('[BBC Calendar] Failed to convert quarters:', e);
+      }
+      try {
+        setApiStats(statsRowToStats(statsData));
+      } catch (e) {
+        console.warn('[BBC Calendar] Failed to convert stats:', e);
+      }
     } catch (err) {
       console.warn('API unavailable, using local data:', err);
       setError('Could not connect to the database. Showing cached data.');
-      // Keep whatever data we have (fallback quarters, empty events)
     } finally {
       setLoading(false);
     }

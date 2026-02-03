@@ -17,8 +17,16 @@ import {
   Pencil
 } from 'lucide-react';
 import type { Event } from '../types';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { useAdmin } from '../lib/admin';
+
+function safeFormat(date: Date, fmt: string, fallback = '—'): string {
+  try {
+    return isValid(date) ? format(date, fmt) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 interface EventsManagementProps {
   events: Event[];
@@ -225,10 +233,10 @@ export default function EventsManagement({ events, loading, onAddEvent, onEditEv
                         </div>
                         <div>
                           <p className="font-semibold text-slate-900">
-                            {format(event.date, 'MMM d')}
+                            {safeFormat(event.date, 'MMM d')}
                           </p>
                           <p className="text-sm text-slate-500">
-                            {format(event.date, 'EEEE')}
+                            {safeFormat(event.date, 'EEEE')}
                           </p>
                         </div>
                       </div>
@@ -281,7 +289,7 @@ export default function EventsManagement({ events, loading, onAddEvent, onEditEv
                             <p className="text-sm text-slate-600 mb-3">{event.description}</p>
                           )}
                           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-                            <span>Date: {format(event.date, 'EEEE, MMMM d, yyyy')}</span>
+                            <span>Date: {safeFormat(event.date, 'EEEE, MMMM d, yyyy')}</span>
                             {event.ministry && <span>Ministry: {event.ministry}</span>}
                             {event.category && <span className="capitalize">Category: {event.category}</span>}
                             {event.budget && <span>Budget: K{event.budget.toLocaleString()}</span>}
