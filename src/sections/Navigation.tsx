@@ -15,11 +15,10 @@ interface NavigationProps {
   setCalendarView: (view: CalendarView) => void;
 }
 
-// Simplified nav items - only showing what's functional
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'list', label: 'Upcoming Events', icon: List },
   { id: 'month', label: 'Calendar', icon: CalendarDays },
-  { id: 'list', label: 'Events', icon: List },
 ];
 
 export default function Navigation({ isScrolled, calendarView, setCalendarView }: NavigationProps) {
