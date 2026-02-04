@@ -353,7 +353,7 @@ function App() {
 
           <section id="events-section">
             <EventsManagement
-              events={eventsForSelectedQuarter}
+              events={events}
               loading={loading}
               onEventsChanged={loadData}
               onAddEvent={handleAddEvent}
@@ -364,7 +364,7 @@ function App() {
 
           <section id="calendar-section">
             <CalendarGrid
-              events={eventsForSelectedQuarter}
+              events={events}
               onAddEventOnDate={handleAddEventOnDate}
               onEditEvent={handleEditEvent}
               onViewEvent={handleViewEvent}
