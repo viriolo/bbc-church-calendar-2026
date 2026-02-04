@@ -80,11 +80,13 @@ export default async function handler(req: Request, _context: Context) {
       `;
       const event = result[0];
 
-      // Activity log
-      await sql`
-        INSERT INTO event_activity_log (event_id, actor, action, summary)
-        VALUES (${event.id}, ${who}, 'created', ${`Event '${String(title).replace(/'/g, "''")}' created`})
-      `;
+      // Activity log (non-blocking — don't fail if table doesn't exist yet)
+      try {
+        await sql`
+          INSERT INTO event_activity_log (event_id, actor, action, summary)
+          VALUES (${event.id}, ${who}, 'created', ${`Event '${String(title).replace(/'/g, "''")}' created`})
+        `;
+      } catch (e) { console.error('[Activity Log] create:', e); }
 
       // Sync to Google Calendar (non-blocking — don't fail the API call if GCal fails)
       const gcalId = await createGoogleCalendarEvent({
@@ -160,12 +162,14 @@ export default async function handler(req: Request, _context: Context) {
         summaries.push(`budget updated`);
       }
       if (summaries.length > 0) {
-        const action = summaries.some((s) => s.startsWith('status changed')) ? 'status_changed' : 'updated';
-        const summary = `Event '${String(event.title).replace(/'/g, "''")}' — ${summaries.join('; ')}`;
-        await sql`
-          INSERT INTO event_activity_log (event_id, actor, action, summary)
-          VALUES (${event.id}, ${who}, ${action}, ${summary})
-        `;
+        try {
+          const action = summaries.some((s) => s.startsWith('status changed')) ? 'status_changed' : 'updated';
+          const summary = `Event '${String(event.title).replace(/'/g, "''")}' — ${summaries.join('; ')}`;
+          await sql`
+            INSERT INTO event_activity_log (event_id, actor, action, summary)
+            VALUES (${event.id}, ${who}, ${action}, ${summary})
+          `;
+        } catch (e) { console.error('[Activity Log] update:', e); }
       }
 
       // Sync to Google Calendar
@@ -213,11 +217,13 @@ export default async function handler(req: Request, _context: Context) {
       }
       const event = existing[0];
 
-      // Activity log
-      await sql`
-        INSERT INTO event_activity_log (event_id, actor, action, summary)
-        VALUES (${id}, ${actor}, 'deleted', ${`Event '${String(event.title).replace(/'/g, "''")}' deleted`})
-      `;
+      // Activity log (non-blocking)
+      try {
+        await sql`
+          INSERT INTO event_activity_log (event_id, actor, action, summary)
+          VALUES (${id}, ${actor}, 'deleted', ${`Event '${String(event.title).replace(/'/g, "''")}' deleted`})
+        `;
+      } catch (e) { console.error('[Activity Log] delete:', e); }
 
       await sql`DELETE FROM events WHERE id = ${id}`;
 
