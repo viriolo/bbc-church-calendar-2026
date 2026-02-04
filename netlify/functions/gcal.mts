@@ -1,20 +1,15 @@
 /**
- * Google Calendar Sync Helper
+ * Google Calendar Sync Helper (lightweight — no googleapis dependency)
+ *
+ * Uses direct REST API calls + JWT auth via Node crypto.
  *
  * Requires these environment variables on Netlify:
- *   GOOGLE_SERVICE_ACCOUNT_EMAIL  — service account email (e.g. bbc-calendar@proj.iam.gserviceaccount.com)
- *   GOOGLE_PRIVATE_KEY            — PEM private key (with literal \n replaced by actual newlines)
- *   GOOGLE_CALENDAR_ID            — the calendar to sync to (e.g. borokobaptistcurch@gmail.com)
- *
- * Setup steps:
- *   1. Create a Google Cloud project at console.cloud.google.com
- *   2. Enable the Google Calendar API
- *   3. Create a Service Account → download JSON key
- *   4. Share the Google Calendar with the service account email (give "Make changes to events" permission)
- *   5. Set the three env vars above on Netlify
+ *   GOOGLE_SERVICE_ACCOUNT_EMAIL  — service account email
+ *   GOOGLE_PRIVATE_KEY            — PEM private key
+ *   GOOGLE_CALENDAR_ID            — the calendar to sync to
  */
 
-import { google } from 'googleapis';
+import crypto from 'node:crypto';
 
 interface CalendarEventData {
   title: string;
@@ -26,28 +21,56 @@ interface CalendarEventData {
   category?: string;
 }
 
-function getCalendarClient() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_PRIVATE_KEY;
-  const calendarId = process.env.GOOGLE_CALENDAR_ID;
+const CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 
-  if (!email || !key || !calendarId) {
-    return null; // Google Calendar not configured — sync silently skipped
+// --- JWT helpers ---
+
+function base64url(input: string | Buffer): string {
+  const buf = typeof input === 'string' ? Buffer.from(input) : input;
+  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function getAccessToken(): Promise<string | null> {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const rawKey = process.env.GOOGLE_PRIVATE_KEY;
+
+  if (!email || !rawKey) return null;
+
+  const privateKey = rawKey.replace(/\\n/g, '\n');
+  const now = Math.floor(Date.now() / 1000);
+
+  const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const payload = base64url(JSON.stringify({
+    iss: email,
+    scope: 'https://www.googleapis.com/auth/calendar',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  }));
+
+  const signInput = `${header}.${payload}`;
+  const sign = crypto.createSign('RSA-SHA256');
+  sign.update(signInput);
+  const signature = base64url(sign.sign(privateKey));
+
+  const jwt = `${signInput}.${signature}`;
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+
+  if (!res.ok) {
+    console.error('[GCal] Token exchange failed:', res.status, await res.text());
+    return null;
   }
 
-  // The private key comes from env as a string with literal \n — replace with real newlines
-  const privateKey = key.replace(/\\n/g, '\n');
-
-  const auth = new google.auth.JWT(
-    email,
-    undefined,
-    privateKey,
-    ['https://www.googleapis.com/auth/calendar'],
-  );
-
-  const calendar = google.calendar({ version: 'v3', auth });
-  return { calendar, calendarId };
+  const data = await res.json() as { access_token: string };
+  return data.access_token;
 }
+
+// --- Event helpers ---
 
 function buildGoogleEvent(data: CalendarEventData) {
   const statusPrefix = data.status && data.status !== 'confirmed'
@@ -64,11 +87,11 @@ function buildGoogleEvent(data: CalendarEventData) {
     summary: `${statusPrefix}${data.title}`,
     description: descParts.join('\n'),
     start: {
-      date: data.date,           // all-day event
+      date: data.date,
       timeZone: 'Pacific/Port_Moresby',
     },
     end: {
-      date: data.endDate || data.date,  // same day if no end date
+      date: data.endDate || data.date,
       timeZone: 'Pacific/Port_Moresby',
     },
   };
@@ -78,16 +101,31 @@ function buildGoogleEvent(data: CalendarEventData) {
  * Create a Google Calendar event. Returns the Google event ID, or null if not configured.
  */
 export async function createGoogleCalendarEvent(data: CalendarEventData): Promise<string | null> {
-  const client = getCalendarClient();
-  if (!client) return null;
+  const calendarId = process.env.GOOGLE_CALENDAR_ID;
+  const token = await getAccessToken();
+  if (!token || !calendarId) return null;
 
   try {
-    const res = await client.calendar.events.insert({
-      calendarId: client.calendarId,
-      requestBody: buildGoogleEvent(data),
-    });
-    console.log('[GCal] Created event:', res.data.id);
-    return res.data.id || null;
+    const res = await fetch(
+      `${CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildGoogleEvent(data)),
+      }
+    );
+
+    if (!res.ok) {
+      console.error('[GCal] Create failed:', res.status, await res.text());
+      return null;
+    }
+
+    const result = await res.json() as { id: string };
+    console.log('[GCal] Created event:', result.id);
+    return result.id || null;
   } catch (err) {
     console.error('[GCal] Failed to create event:', err);
     return null;
@@ -98,15 +136,28 @@ export async function createGoogleCalendarEvent(data: CalendarEventData): Promis
  * Update an existing Google Calendar event.
  */
 export async function updateGoogleCalendarEvent(googleEventId: string, data: CalendarEventData): Promise<boolean> {
-  const client = getCalendarClient();
-  if (!client) return false;
+  const calendarId = process.env.GOOGLE_CALENDAR_ID;
+  const token = await getAccessToken();
+  if (!token || !calendarId) return false;
 
   try {
-    await client.calendar.events.update({
-      calendarId: client.calendarId,
-      eventId: googleEventId,
-      requestBody: buildGoogleEvent(data),
-    });
+    const res = await fetch(
+      `${CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(googleEventId)}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildGoogleEvent(data)),
+      }
+    );
+
+    if (!res.ok) {
+      console.error('[GCal] Update failed:', res.status, await res.text());
+      return false;
+    }
+
     console.log('[GCal] Updated event:', googleEventId);
     return true;
   } catch (err) {
@@ -119,14 +170,26 @@ export async function updateGoogleCalendarEvent(googleEventId: string, data: Cal
  * Delete a Google Calendar event.
  */
 export async function deleteGoogleCalendarEvent(googleEventId: string): Promise<boolean> {
-  const client = getCalendarClient();
-  if (!client) return false;
+  const calendarId = process.env.GOOGLE_CALENDAR_ID;
+  const token = await getAccessToken();
+  if (!token || !calendarId) return false;
 
   try {
-    await client.calendar.events.delete({
-      calendarId: client.calendarId,
-      eventId: googleEventId,
-    });
+    const res = await fetch(
+      `${CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(googleEventId)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!res.ok && res.status !== 410) { // 410 = already deleted
+      console.error('[GCal] Delete failed:', res.status, await res.text());
+      return false;
+    }
+
     console.log('[GCal] Deleted event:', googleEventId);
     return true;
   } catch (err) {
