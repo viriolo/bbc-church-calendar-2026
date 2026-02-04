@@ -1,5 +1,10 @@
 import type { Context } from '@netlify/functions';
 import { getDb, jsonResponse, errorResponse, corsHeaders } from './db.mts';
+import {
+  createGoogleCalendarEvent,
+  updateGoogleCalendarEvent,
+  deleteGoogleCalendarEvent,
+} from './gcal.mts';
 
 export default async function handler(req: Request, _context: Context) {
   // Handle CORS preflight
@@ -74,10 +79,28 @@ export default async function handler(req: Request, _context: Context) {
         RETURNING *
       `;
       const event = result[0];
+
+      // Activity log
       await sql`
         INSERT INTO event_activity_log (event_id, actor, action, summary)
         VALUES (${event.id}, ${who}, 'created', ${`Event '${String(title).replace(/'/g, "''")}' created`})
       `;
+
+      // Sync to Google Calendar (non-blocking — don't fail the API call if GCal fails)
+      const gcalId = await createGoogleCalendarEvent({
+        title,
+        date,
+        endDate: end_date,
+        description,
+        status: status || 'draft',
+        ministry,
+        category,
+      });
+
+      if (gcalId) {
+        await sql`UPDATE events SET google_calendar_event_id = ${gcalId} WHERE id = ${event.id}`;
+        event.google_calendar_event_id = gcalId;
+      }
 
       return jsonResponse(event, 201);
     }
@@ -116,6 +139,7 @@ export default async function handler(req: Request, _context: Context) {
       `;
       const event = result[0];
 
+      // Activity log
       const summaries: string[] = [];
       if (status != null && String(old.status) !== String(status)) {
         summaries.push(`status changed from ${old.status} to ${status}`);
@@ -144,6 +168,34 @@ export default async function handler(req: Request, _context: Context) {
         `;
       }
 
+      // Sync to Google Calendar
+      if (event.google_calendar_event_id) {
+        await updateGoogleCalendarEvent(event.google_calendar_event_id, {
+          title: event.title,
+          date: String(event.date).slice(0, 10),
+          endDate: event.end_date ? String(event.end_date).slice(0, 10) : undefined,
+          description: event.description,
+          status: event.status,
+          ministry: event.ministry,
+          category: event.category,
+        });
+      } else {
+        // Event didn't have a GCal ID yet — create one
+        const gcalId = await createGoogleCalendarEvent({
+          title: event.title,
+          date: String(event.date).slice(0, 10),
+          endDate: event.end_date ? String(event.end_date).slice(0, 10) : undefined,
+          description: event.description,
+          status: event.status,
+          ministry: event.ministry,
+          category: event.category,
+        });
+        if (gcalId) {
+          await sql`UPDATE events SET google_calendar_event_id = ${gcalId} WHERE id = ${event.id}`;
+          event.google_calendar_event_id = gcalId;
+        }
+      }
+
       return jsonResponse(event);
     }
 
@@ -160,16 +212,21 @@ export default async function handler(req: Request, _context: Context) {
         return errorResponse('Event not found', 404);
       }
       const event = existing[0];
+
+      // Activity log
       await sql`
         INSERT INTO event_activity_log (event_id, actor, action, summary)
         VALUES (${id}, ${actor}, 'deleted', ${`Event '${String(event.title).replace(/'/g, "''")}' deleted`})
       `;
 
-      const result = await sql`
-        DELETE FROM events WHERE id = ${id} RETURNING *
-      `;
+      await sql`DELETE FROM events WHERE id = ${id}`;
 
-      return jsonResponse({ deleted: true, event: result[0] });
+      // Remove from Google Calendar
+      if (event.google_calendar_event_id) {
+        await deleteGoogleCalendarEvent(event.google_calendar_event_id);
+      }
+
+      return jsonResponse({ deleted: true, event });
     }
 
     return errorResponse('Method not allowed', 405);

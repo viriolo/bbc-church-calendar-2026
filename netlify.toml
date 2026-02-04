@@ -74,6 +74,11 @@
   to = "/.netlify/functions/activity"
   status = 200
 
+[[redirects]]
+  from = "/api/gcal-setup"
+  to = "/.netlify/functions/gcal-setup"
+  status = 200
+
 # SPA redirect (catch-all — must be last)
 [[redirects]]
   from = "/*"
