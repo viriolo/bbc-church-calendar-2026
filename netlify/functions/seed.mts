@@ -54,6 +54,18 @@ export default async function handler(req: Request, _context: Context) {
     await sql`CREATE INDEX IF NOT EXISTS idx_events_date ON events(date)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_events_status ON events(status)`;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS event_activity_log (
+        id SERIAL PRIMARY KEY,
+        event_id INTEGER NOT NULL,
+        actor VARCHAR(100) NOT NULL DEFAULT 'Admin',
+        action VARCHAR(50) NOT NULL,
+        summary TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS idx_activity_log_event_id ON event_activity_log(event_id)`;
+
     // ── Check if data already exists ──
     const existing = await sql`SELECT COUNT(*) as count FROM quarters`;
     if (Number(existing[0].count) > 0) {
